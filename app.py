@@ -1,4 +1,4 @@
-from dashViz import app
+from viz.dashViz import app
 
 server = app.server
 
