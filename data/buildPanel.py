@@ -22,7 +22,7 @@ def getCorrelations(tickData, otherData, dayShift, shiftFactor=1, numDecimals=2)
         correlations.append(corr)
     return correlations
 
-def getData(ticker, start=datetime(2017, 1, 1), end=datetime.now()):
+def getClose(ticker, start=datetime(2017, 1, 1), end=datetime.now()):
     data = get_historical_data(ticker, start, end, output_format='pandas')
     data = data['close']
     data.name = ticker
@@ -40,11 +40,11 @@ def performAnalysis(writeData=False):
     masterCorrelationMap = {}
 
     for tick in tickers:
-        tickData = getData(tick, start, end)
+        tickData = getClose(tick, start, end)
         masterCorrelationMap[tick] = {}
         for otherTick in tickers:
             if otherTick is not tick:
-                otherData = getData(otherTick, start, end)
+                otherData = getClose(otherTick, start, end)
                 correlations = getCorrelations(tickData, otherData, dayShift)
                 masterCorrelationMap[tick][otherTick] = correlations
                 

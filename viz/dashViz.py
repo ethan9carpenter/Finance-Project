@@ -1,9 +1,8 @@
-
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
-from viz.buildPanel import getData, getCorrelations
+from data.buildPanel import getClose, getCorrelations
 from datetime import datetime
 
 app = dash.Dash()
@@ -32,8 +31,8 @@ app.layout = html.Div(children=children)
      Input(component_id='dayShift', component_property='value')])
 def updateGraph(ticker1, ticker2, dayShift):
     try:
-        tickData1 = getData(ticker1, start=datetime(2014, 1, 1))
-        tickData2 = getData(ticker2, start=datetime(2014, 1, 1))
+        tickData1 = getClose(ticker1, start=datetime(2014, 1, 1))
+        tickData2 = getClose(ticker2, start=datetime(2014, 1, 1))
         corr = getCorrelations(tickData1, tickData2, dayShift)
         
         line = {'x': list(range(dayShift+1)), 
