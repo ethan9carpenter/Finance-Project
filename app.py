@@ -1,4 +1,4 @@
-from visualizations.firstDashApp import app
+from dashViz import app
 
 server = app.server
 
