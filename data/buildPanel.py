@@ -1,19 +1,20 @@
 import pandas as pd
 from datetime import datetime
-from iexfinance.stocks import get_historical_data, Stock
+from iexfinance.stocks import get_historical_data
 from iexfinance import get_available_symbols
 import json
 from datetime import datetime as dt
-import os, time
+import os
 
 def getCorrelations(data, otherData, dayShift, shiftFactor=1, limitDecimals=False):
     correlations = []
-    df = pd.DataFrame(data)
     otherDF = pd.DataFrame(otherData)
-    df = df.join(otherDF)
+    df = data.join(otherDF)
 
     name = df.columns[0]
-    
+    #===========================================================================
+    # EFFICIENCY ISSUES HERE TO FIX
+    #===========================================================================
     for shift in range(dayShift+1):
         shift *= shiftFactor
         dfCopy = df.copy(deep=False)
@@ -27,14 +28,10 @@ def getCorrelations(data, otherData, dayShift, shiftFactor=1, limitDecimals=Fals
     return correlations
 
 def getData(ticker, start=datetime(2017, 1, 1), end=datetime.now(), type='close'):
-    try:
-        data = get_historical_data(ticker, start, end, output_format='pandas')
-        data = data[type]
-        data.name = ticker
-        return data
-    except Exception as error:
-        print(error)
-        raise Exception(ticker)
+    data = get_historical_data(ticker, start, end, output_format='pandas')
+    data = data[type]
+    data.name = ticker
+    return data
 
 def _saveJSON(fp, data):
     with open(fp, 'w') as file:
@@ -60,15 +57,10 @@ def toPanel(fp):
     
     return panel
 
-def _shouldCompare(otherTick, tick, results):
-    sameTick  = otherTick is  tick 
-    needToAnalyze  = otherTick not in results[tick]
-    
-    return not sameTick and needToAnalyze
 
 def performAnalysis(tickers, start, end=dt.now(), dayShift=1, shiftFactor=1, fp=None, 
                     overwrite=False, returnType='panel'):
-    tickers = _validateSymbols(tickers, fp='iexSymbols.json')
+    #tickers = _validateSymbols(tickers, fp='iexSymbols.json')
     
     if fp and os.path.exists(fp) and not overwrite:
         results = _loadJSON(fp)
@@ -77,9 +69,10 @@ def performAnalysis(tickers, start, end=dt.now(), dayShift=1, shiftFactor=1, fp=
 
     for i, tick in enumerate(tickers):
         tickData = getData(tick, start, end)
+        tickData = pd.DataFrame(tickData)
         results[tick] = {}
         for otherTick in tickers:
-            if _shouldCompare(otherTick, tick, results):
+            if otherTick is not tick:
                 otherData = getData(otherTick, start, end)
                 correlations = getCorrelations(tickData, otherData, dayShift, shiftFactor)
                 results[tick][otherTick] = correlations
@@ -103,6 +96,7 @@ def _validateSymbols(symbols, fp=None):
         results = {'valid': [],
                    'invalid': []}
 
+    """
     for i, symb in enumerate(symbols):
         try:
             get_historical_data(symb)
@@ -113,7 +107,7 @@ def _validateSymbols(symbols, fp=None):
         if fp is not None and i % 10 == 0:
             print(i / len(symbols))
             _saveJSON(fp, results)
-        
+    """   
     
     if fp is not None:
         _saveJSON(fp, results)
@@ -122,10 +116,9 @@ def _validateSymbols(symbols, fp=None):
     return results['valid']
 
 if __name__ == '__main__':
-    symbols = get_available_symbols()
-    tickers = [tick['symbol'] for tick in symbols]
+    tickers = _loadJSON('iexSymbols.json')['valid'][:100]
     print(len(tickers), 'total tickers')
     #tickers = ['aapl', 'a', 'amzn', 'hd', 'low', 'nflx']
-    start = dt(2014, 1, 1)
+    start = dt(2018, 1, 1)
     end  = dt.now()
-    performAnalysis(tickers, start, end, dayShift=7, fp='allIEXStocks.json', overwrite=False)
+    performAnalysis(tickers, start, end, dayShift=1, fp='allIEXStocks.json', overwrite=True)
