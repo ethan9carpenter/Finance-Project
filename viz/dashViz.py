@@ -49,7 +49,7 @@ def updateGraph(ticker1, ticker2, dayShift):
                   'xaxis': {'dtick': 1, 'title': '{} Date minus {} Date'.format(ticker1.upper(), ticker2.upper())},
                   'yaxis': {'title': 'Correlation Coefficient'}}
         
-        return dcc.Graph(id='stock', figure={'data': [line], 'layout': layout})
+        return dcc.Graph(id='stock', figure={'buildData': [line], 'layout': layout})
     except:
         return html.Div("Please enter valid tickers")
     
