@@ -78,6 +78,8 @@ if __name__ == '__main__':
     #tickers = ['aapl', 'a', 'amzn', 'hd', 'low', 'nflx']
     start = dt(2014, 1, 1)
     end  = dt.now()
-    writeStocks(tickers, start, end, 'close')
-
-    performAnalysis(tickers, start, end, dayShift=1, fp='allIEXStocks.json', overwrite=False)
+    #RUN ONCE
+    #writeStocks(tickers, start, end, 'close')
+    fp = 'results/{}_{}_{}.json'.format(start.date(), end.date(), len(tickers))
+    print(fp)
+    performAnalysis(tickers, start, end, dayShift=1, fp=fp, overwrite=False)
