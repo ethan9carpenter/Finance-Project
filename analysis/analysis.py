@@ -1,8 +1,15 @@
 from buildData.manageFiles import loadJSON
 from pprint import pprint as print
 from operator import itemgetter
+import os
 
-data = loadJSON('results/2014-01-01_2018-12-20_fangs_4_10.json')
+def moveDirUp():
+    baseDir = os.getcwd()
+    baseDir = baseDir[:baseDir.rfind('/')]
+    os.chdir(baseDir)
+
+moveDirUp()
+data = loadJSON('buildData/results/2014-01-01_2018-12-20_fangs_4_0_10.json')
 results = {}
 ordered = {}
 howMany = 5
@@ -19,4 +26,6 @@ for company in results:
     ordered[company] = sorted(listed, key=itemgetter(1))[:howMany]
 
 print(ordered)
-    
+
+
+
