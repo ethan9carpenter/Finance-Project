@@ -1,78 +1,97 @@
 import pandas as pd
 from datetime import datetime as dt
-import os
-from buildData.manageFiles import loadJSON, saveJSON, loadPickle
-from buildData.manageData import toPanel, writeStocks, loadTickers
-from time import sleep
+from os.path import exists
+from buildData.manageFiles import loadJSON, saveJSON
+from buildData.manageData import writeStocks, loadTickers
+from json.decoder import JSONDecodeError
 
-def getCorrelations(data, otherData, dayShift, shiftFactor=1):
+def getCorrelations(data, otherData, dayShift, shiftFactor=1, neg=True):
     correlations = []
-    otherDF = pd.DataFrame(otherData)
-    df = data.join(otherDF)
 
-    name = df.columns[0]
     for i in range(dayShift+1):
         if i > 0:
-            df[name] = df[name].shift(shiftFactor)
-        corr = df.corr()
-        corr = corr.iloc[1, 0]
+            data = data.shift(shiftFactor)
+        corr = data.corr(otherData)
+        if not neg and corr < 0:
+            corr = -corr
         correlations.append(corr)
     return correlations
 
-def performAnalysis(tickers, fp, start, end=dt.now(), dayShift=1, shiftFactor=1, 
-                    overwrite=False, returnType='panel'):
-    totalToAnalyze = len(tickers)
-    if fp and os.path.exists(fp) and not overwrite:
-        results = loadJSON(fp)
-    else:        
-        results = {}
-    
-    validateSymbols(tickers, start, end, 'close')
+def _removeCompleted(results, tickers, overwrite):
     numComplete = 0
     if not overwrite:
         for tick in results:
             if tick in tickers:
                 numComplete += 1
                 tickers.remove(tick)
+    return numComplete
+
+def _handleJSONReadError(fp):
+    with open(fp) as file:
+        text = file.read()
+        index = text.rfind('}')
+        text = text[:index] + '}}'
+    with open(fp, 'w') as file:
+        file.write(text)
+    with open(fp) as file:
+        return loadJSON(fp)
+
+def _loadResults(fp, overwrite):
+    if fp and exists(fp) and not overwrite:
+        try:
+            results = loadJSON(fp)
+        except JSONDecodeError:
+            results = _handleJSONReadError(fp)
+    else:        
+        results = {}
+    return results
+
+def _loadStock(ticker):
+    return pd.read_pickle('data/pickles/{}.pickle'.format(ticker))
+
+def performAnalysis(tickers, fp, start, end=dt.now(), dayShift=1, shiftFactor=1, overwrite=False):
+    
+    totalToAnalyze = len(tickers)
+    results = _loadResults(fp, overwrite)
+    _validateSymbols(tickers, start, end, 'close')
+    numComplete = _removeCompleted(results, tickers, overwrite)
 
     for i, tick in enumerate(tickers):
-        tickData = loadPickle('buildData/{}.pickle'.format(tick))
-        tickData = pd.DataFrame(tickData)
-        results[tick] = {}
+        tickData = _loadStock(tick)
+        tickResults = {}
         for otherTick in tickers:
             if otherTick is not tick:
-                otherData = loadPickle('buildData/{}.pickle'.format(otherTick))
-                correlations = getCorrelations(tickData, otherData, dayShift, shiftFactor)
-                results[tick][otherTick] = correlations
-        sleep(.1)
+                otherData = _loadStock(otherTick)
+                tickResults[otherTick] = getCorrelations(tickData, otherData, dayShift, shiftFactor)
+        
+        results[tick] = tickResults #to prevent incomplete writing
         saveJSON(fp, results)
+        
         print(i+1+numComplete, 'out of', totalToAnalyze)
     print('Done')
     
-    if returnType == 'dict':
-        return results
-    elif returnType == 'panel':
-        return toPanel(fp)
-    
-def validateSymbols(symbols, start, end, what):
+def _validateSymbols(symbols, start, end, what):
     invalid = []
     
     for tick in symbols:
-        if not os.path.exists('buildData/{}.pickle'.format(tick)):
+        if not exists('data/json/{}.json'.format(tick)):
             invalid.append(tick)
             
     writeStocks(invalid, start, end, what)
 
+def initAnalysis(which, start, end, dayShift):
+    tickers = loadTickers(which)    
+    fp = 'results/{}_{}_{}_{}_{}.json'.format(start.date(), end.date(), which, len(tickers), dayShift)
+    print(len(tickers), 'total tickers\n', fp)
+    
+    return tickers, fp
 
 if __name__ == '__main__':
-    which = 'sp500'
-    tickers = loadTickers(which)
-    print(len(tickers), 'total tickers')
-    dayShift = 1
     start = dt(2014, 1, 1)
     end  = dt(2018, 12, 20)
-    #RUN ONCE
-    #writeStocks(tickers, start, end, 'close')
-    fp = 'results/{}_{}_{}_{}.json'.format(start.date(), end.date(), which, len(tickers), dayShift)
-    print(fp)
+    which = 'sp500'
+    dayShift = 1
+    
+    tickers, fp = initAnalysis(which, start, end, dayShift)
+    
     performAnalysis(tickers, start=start, end=end, dayShift=dayShift, fp=fp, overwrite=False)

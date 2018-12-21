@@ -2,7 +2,7 @@ from datetime import datetime
 from iexfinance.stocks import get_historical_data
 import json
 import pandas as pd
-from manageFiles import loadJSON
+from manageFiles import loadJSON, saveJSON
 
 def getData(ticker, start=datetime(2017, 1, 1), end=datetime.now(), what='close'):
     data = get_historical_data(ticker, start, end, output_format='pandas')
@@ -13,8 +13,7 @@ def getData(ticker, start=datetime(2017, 1, 1), end=datetime.now(), what='close'
 def writeStocks(tickers, start, end, what):
     for i, tick in enumerate(tickers):
         df = getData(tick, start, end, what)
-        path = 'buildData/{}.pickle'.format(tick)
-        df.to_pickle(path)
+        df.to_pickle('data/pickles/{}.pickle'.format(tick))
         print(i+1, '/', len(tickers))
         
 def toPanel(fp):
