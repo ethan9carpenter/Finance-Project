@@ -18,8 +18,15 @@ def writeStocks(tickers, start, end, what):
         print(i+1, '/', len(tickers))
     printMessage('Done')
 
-def loadStock(ticker):
-    return pd.read_pickle('data/pickles/{}.pickle'.format(ticker))
+def loadStocks(tickers):
+    if isinstance(tickers, str):
+        return pd.read_pickle('data/pickles/{}.pickle'.format(tickers))
+    else:
+        stockData = {}
+        for tick in tickers:
+            stockData[tick] = loadStocks(tick)
+        stockData = pd.DataFrame.from_dict(stockData)
+        return stockData
 
 def loadTickers(which):
     if which == 'iex':

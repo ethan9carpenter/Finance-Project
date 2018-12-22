@@ -9,11 +9,12 @@ def moveDirUp():
     os.chdir(baseDir)
 
 moveDirUp()
-data = loadJSON('buildData/results/2014-01-01_2018-12-20_fangs_4_0_10.json')
+data = loadJSON('buildData/results/2014-01-01_2018-12-20_sp500_505_1_1.json')
 results = {}
 ordered = {}
-howMany = 5
+howMany = 1
 afterNDays = 1
+
 
 for mainComp in data:
     results[mainComp] = []
@@ -23,7 +24,7 @@ for mainComp in data:
 
 for company in results:
     listed = results[company]
-    ordered[company] = sorted(listed, key=itemgetter(1))[:howMany]
+    ordered[company] = sorted(listed, key=itemgetter(0), reverse=True)[:howMany]
 
 print(ordered)
 

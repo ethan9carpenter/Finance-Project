@@ -1,15 +1,30 @@
 import json
 import pickle
+from json.decoder import JSONDecodeError
 
 def saveJSON(fp, data):
     with open(fp, 'w') as file:
         json.dump(data, file)
 
 def loadJSON(fp):
-    with open(fp) as file:
-            results = json.load(file)
+    try:
+        with open(fp) as file:
+                results = json.load(file)
+    except JSONDecodeError:
+        print('error loading', fp)
+        results = _handleJSONReadError(fp)
     
     return results
+
+def _handleJSONReadError(fp):
+    with open(fp) as file:
+        text = file.read()
+        index = text.rfind('}')
+        text = text[:index] + '}}'
+    with open(fp, 'w') as file:
+        file.write(text)
+    with open(fp) as file:
+        return loadJSON(fp)
 
 def loadPickle(fp):
     with open(fp, 'rb') as file:
