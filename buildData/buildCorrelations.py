@@ -3,7 +3,10 @@ from os.path import exists
 from buildData.manageStockData import loadTickers, writeStocks, loadStocks
 from buildData.manageResults import loadResults, saveProgress
 from buildData.monitors import printMessage
-
+import time as TIME
+#===============================================================================
+# Convert to use df.corr and then shift for each stock to make more efficient
+#===============================================================================
 def getCorrelations(data, otherData, maxShift, minShift=0, shiftFactor=1, neg=True):
     correlations = []
 
@@ -17,50 +20,43 @@ def getCorrelations(data, otherData, maxShift, minShift=0, shiftFactor=1, neg=Tr
         correlations.append(corr)
     return correlations
 
-def _removeCompleted(fp, tickers, overwrite):
-    results = loadResults(fp, overwrite)
+def _removeCompleted(fp, tickers):
+    results = loadResults(fp)
     numComplete = 0
-    if not overwrite:
-        for tick in results:
-            if tick in tickers:
-                numComplete += 1
-                tickers.remove(tick)
+    for tick in results:
+        if tick in tickers:
+            numComplete += 1
+            tickers.remove(tick)
     return numComplete
 
-def performAnalysis(stocks, fp, start, end, maxShift, minShift=1, shiftFactor=1, overwrite=False):
+def performAnalysis(stocks, fp, start, end, maxShift, loadDataType, minShift=1, shiftFactor=1):
     totalToAnalyze = len(stocks)
-    _validateSymbols(stocks, start, end, 'close')
-    numComplete = _removeCompleted(fp, stocks, overwrite)
-    
-    printMessage('Loading Stocks')
-    stocks = loadStocks(stocks)
-    printMessage('Done')
+    _validateSymbols(stocks, start, end, 'close', fileType=loadDataType)
+    numComplete = _removeCompleted(fp, stocks)
+    stocks = loadStocks(stocks, loadDataType, True)
     printMessage('Calculating Correlations')
-    
     for i, tick in enumerate(stocks.columns):
+        time = TIME.time()
         tickResults = {}
         for other in stocks.columns:
             if other is not tick:
                 tickResults[other] = getCorrelations(stocks[tick], stocks[other], 
                                                          maxShift, minShift, shiftFactor)
-        saveProgress(fp, overwrite, tickResults, tick)
-        print(i+1+numComplete, 'out of', totalToAnalyze, dt.now().time())
+        saveProgress(fp, tickResults, tick)
+        elap = (TIME.time()-time)
+        print(i+1+numComplete, 'out of', totalToAnalyze, elap)
     printMessage('Done')
     
-def _validateSymbols(symbols, start, end, what):
+def _validateSymbols(symbols, start, end, what, fileType):
     invalid = []
     
     for tick in symbols:
-        if not exists('data/pickles/{}.pickle'.format(tick)):
-            invalid.append(tick)
-            
-    writeStocks(invalid, start, end, what)
+        if not exists('data/{}/{}.{}'.format(fileType, tick, fileType)):
+            invalid.append(tick) 
+    writeStocks(invalid, start, end, what, fileType)
 
 def _initAnalysis(which, start, end, minShift, maxShift):
-    if isinstance(which, str):
-        tickers = loadTickers(which)
-    else:
-        tickers = which    
+    tickers = loadTickers(which)   [:100] 
     fp = 'results/{}_{}_{}_{}_{}_{}.json'.format(start.date(), end.date(), which, 
                                                  len(tickers), minShift, maxShift)
     printMessage('Init Info')
@@ -71,12 +67,13 @@ def _initAnalysis(which, start, end, minShift, maxShift):
 if __name__ == '__main__':
     start = dt(2014, 1, 1)
     end  = dt(2018, 12, 20)
-    which = 'fangs'
+    which = 'sp500'
     minShift = 1
     maxShift = 1
-    overwrite = False
-    
     tickers, fp = _initAnalysis(which, start, end, minShift, maxShift)
+    loadDataType = 'pickle'
     
-    performAnalysis(stocks=tickers, start=start, end=end, minShift=minShift, 
-                    maxShift=maxShift, fp=fp, overwrite=overwrite)
+    #performAnalysis(stocks=tickers, start=start, end=end, minShift=minShift, 
+    #                maxShift=maxShift, fp=fp, loadDataType=loadDataType)
+    import cProfile
+    cProfile.run('performAnalysis(stocks=tickers, start=start, end=end, minShift=minShift, maxShift=maxShift, fp=fp, loadDataType=loadDataType)')

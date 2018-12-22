@@ -1,7 +1,7 @@
 import json
 import pandas as pd
 from os.path import exists
-from buildData.manageFiles import loadJSON, saveJSON
+from buildData.manageFiles import loadJSON, saveJSON, loadPickle, savePickle
 
 def toPanel(fp):
     with open(fp, 'r') as file:
@@ -17,18 +17,16 @@ def toPanel(fp):
     
     return panel
 
-def loadResults(fp, overwrite):
-    if exists(fp) and not overwrite:
-        results = loadJSON(fp)
+def loadResults(fp):
+    if exists(fp):
+        results = loadPickle(fp)
     else:        
         results = {}
     return results
-
-
     
-def saveProgress(fp, overwrite, tickResults, tick):
-    results = loadResults(fp, overwrite)
+def saveProgress(fp, tickResults, tick):
+    results = loadResults(fp)
     results[tick] = tickResults #to prevent incomplete writing
-    saveJSON(fp, results)
+    savePickle(fp, results)
     
     

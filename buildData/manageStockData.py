@@ -3,6 +3,7 @@ from iexfinance.stocks import get_historical_data
 import pandas as pd
 from buildData.manageFiles import loadJSON
 from buildData.monitors import printMessage
+from buildData.manageMemory import convertData
 
 def getData(ticker, start=datetime(2017, 1, 1), end=datetime.now(), what='close'):
     data = get_historical_data(ticker, start, end, output_format='pandas')
@@ -10,22 +11,31 @@ def getData(ticker, start=datetime(2017, 1, 1), end=datetime.now(), what='close'
     data.name = ticker
     return data
 
-def writeStocks(tickers, start, end, what):
+def writeStocks(tickers, start, end, what, fileType):
     printMessage('Writing Stocks')
     for i, tick in enumerate(tickers):
         df = getData(tick, start, end, what)
-        df.to_pickle('data/pickles/{}.pickle'.format(tick))
+        if fileType == 'pickle':
+            df.to_pickle('data/pickle/{}.pickle'.format(tick))
+        elif fileType == 'json':
+            df.to_json('data/json/{}.json'.format(tick))
         print(i+1, '/', len(tickers))
     printMessage('Done')
 
-def loadStocks(tickers):
+def loadStocks(tickers, fileType, convert=False):
     if isinstance(tickers, str):
-        return pd.read_pickle('data/pickles/{}.pickle'.format(tickers))
+        if fileType == 'json':
+            return pd.read_json('data/{}/{}.{}'.format(fileType, tickers, fileType))
+        elif fileType == 'pickle':
+            return pd.read_pickle('data/{}/{}.{}'.format(fileType, tickers, fileType))
     else:
+        printMessage('Loading Stocks')
         stockData = {}
         for tick in tickers:
-            stockData[tick] = loadStocks(tick)
+            stockData[tick] = loadStocks(tick, fileType)
         stockData = pd.DataFrame.from_dict(stockData)
+        if convert:
+            convertData(stockData)
         return stockData
 
 def loadTickers(which):
@@ -36,6 +46,6 @@ def loadTickers(which):
     elif which == 'fangs':
         tickers = ['fb', 'aapl', 'googl', 'nflx']
     else:
-        tickers = []
+        tickers = which
         
     return tickers
