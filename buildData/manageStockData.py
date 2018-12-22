@@ -20,7 +20,6 @@ def writeStocks(tickers, start, end, what, fileType):
         elif fileType == 'json':
             df.to_json('data/json/{}.json'.format(tick))
         print(i+1, '/', len(tickers))
-    printMessage('Done')
 
 def loadStocks(tickers, fileType, convert=False):
     if isinstance(tickers, str):

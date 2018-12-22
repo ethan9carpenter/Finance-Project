@@ -12,4 +12,4 @@ loadDataType = 'pickle'
 import cProfile
 cProfile.run('''
 performAnalysis(stocks=tickers, start=start, end=end, minShift=minShift, 
-maxShift=maxShift, fp=fp, loadDataType=loadDataType)''', sort='cumtime')
+maxShift=maxShift, fp=fp, loadDataType=loadDataType, overwrite=True)''', sort='cumtime')

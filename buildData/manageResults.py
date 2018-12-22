@@ -1,7 +1,7 @@
 import json
 import pandas as pd
 from os.path import exists
-from buildData.manageFiles import loadJSON, saveJSON, loadPickle, savePickle
+from buildData.manageFiles import loadPickle, savePickle
 
 def toPanel(fp):
     with open(fp, 'r') as file:

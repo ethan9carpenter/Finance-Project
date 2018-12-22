@@ -1,6 +1,7 @@
 import json
 import pickle
 from json.decoder import JSONDecodeError
+import os
 
 def saveJSON(fp, data):
     with open(fp, 'w') as file:
@@ -35,6 +36,16 @@ def loadPickle(fp):
 def savePickle(fp, data):
     with open(fp, 'wb') as file:
         pickle.dump(data, file)
+
+def deleteFile(fp):
+    if os.path.exists(fp):
+        os.remove(fp)
+        
+def pickleToJSON(fp):
+    pick = loadPickle(fp)
+    fp = fp[:fp.rfind('.')] + '.json'
+    saveJSON(fp, pick)
+    
   
 """      
 def j():
