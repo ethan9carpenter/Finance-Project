@@ -29,10 +29,9 @@ def loadStocks(tickers, fileType, convert=False):
             return pd.read_pickle('data/{}/{}.{}'.format(fileType, tickers, fileType))
     else:
         printMessage('Loading Stocks')
-        stockData = {}
+        stockData = pd.DataFrame()
         for tick in tickers:
             stockData[tick] = loadStocks(tick, fileType)
-        stockData = pd.DataFrame.from_dict(stockData)
         if convert:
             convertData(stockData)
         return stockData

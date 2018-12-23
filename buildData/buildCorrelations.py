@@ -3,23 +3,24 @@ from os.path import exists
 from buildData.manageStockData import loadTickers, writeStocks, loadStocks
 from buildData.manageResults import loadResults, saveProgress
 from buildData.monitors import printMessage
-from buildData.manageFiles import deleteFile, pickleToJSON
-import time as TIME
-#===============================================================================
-# Convert to use df.corr and then shift for each stock to make more efficient
-#===============================================================================
+from buildData.manageFiles import deleteFile
+from time import time as currentTime
+
 def getCorrelations(data, otherData, maxShift, minShift=0, shiftFactor=1, neg=True):
     correlations = []
-
     data = data.shift(minShift-1)
     
     for _ in range(1+maxShift-minShift):
+        #===========================================================================
+        # Costly: shift and corr
+        #===========================================================================
         data = data.shift(shiftFactor)
         corr = data.corr(otherData)
         if not neg and corr < 0:
             corr = -corr
         correlations.append(corr)
     return correlations
+
 
 def _removeCompleted(fp, tickers):        
     results = loadResults(fp)
@@ -36,26 +37,25 @@ def _preprocess(stocks, fp, start, end, loadDataType, overwrite):
     totalToAnalyze = len(stocks)
     _validateSymbols(stocks, start, end, 'close', fileType=loadDataType)
     numComplete = _removeCompleted(fp, stocks)
-    stocks = loadStocks(stocks, loadDataType, True)
+    stocks = loadStocks(stocks, loadDataType, False)
     
     return totalToAnalyze, numComplete, stocks
 
 def _calculateAllCorr(numComplete, totalToAnalyze, stocks, fp, maxShift, minShift, shiftFactor):
     printMessage('Calculating Correlations')
     for i, tick in enumerate(stocks.columns):
-        time = TIME.time()
-        tickResults = {}
-        for other in stocks.columns:
-            if other is not tick:
-                tickResults[other] = getCorrelations(stocks[tick], stocks[other], 
-                                                         maxShift, minShift, shiftFactor)
+        start = currentTime()
+        #tickResults = {}
+        stocks[tick] = stocks[tick].shift(minShift)
+        for _ in range(maxShift-minShift+1):
+            stocks[tick] = stocks[tick].shift(shiftFactor)
+            tickResults = stocks.corrwith(stocks[tick])
+        print(i+1+numComplete, 'out of', totalToAnalyze, currentTime()-start)
         saveProgress(fp, tickResults, tick)
-        print(i+1+numComplete, 'out of', totalToAnalyze, TIME.time()-time)
 
 def performAnalysis(stocks, fp, start, end, maxShift, loadDataType, minShift=1, shiftFactor=1, overwrite=False):
     totalToAnalyze, numComplete, stocks, = _preprocess(stocks, fp, start, end, loadDataType, overwrite)
     _calculateAllCorr(numComplete, totalToAnalyze, stocks, fp, maxShift, minShift, shiftFactor)
-    pickleToJSON(fp)
     
 def _validateSymbols(symbols, start, end, what, fileType):
     invalid = []
@@ -65,10 +65,10 @@ def _validateSymbols(symbols, start, end, what, fileType):
             invalid.append(tick) 
     writeStocks(invalid, start, end, what, fileType)
 
-def _initAnalysis(which, start, end, minShift, maxShift):
-    tickers = loadTickers(which)   [:100] 
-    fp = 'results/{}_{}_{}_{}_{}_{}.pickle'.format(start.date(), end.date(), which, 
-                                                 len(tickers), minShift, maxShift)
+def _initAnalysis(which, start, end, minShift, maxShift, saveType):
+    tickers = loadTickers(which)
+    fp = 'results/{}_{}_{}_{}_{}_{}.{}'.format(start.date(), end.date(), which, 
+                                                 len(tickers), minShift, maxShift, saveType)
     printMessage('Init Info')
     print('Start Time:', dt.now(), '\nTotal Tickers:', len(tickers), '\nFile:', fp)
     
@@ -79,8 +79,9 @@ if __name__ == '__main__':
     end  = dt(2018, 12, 20)
     which = 'sp500'
     minShift = 1
-    maxShift = 1
-    tickers, fp = _initAnalysis(which, start, end, minShift, maxShift)
+    maxShift = 30
+    saveType = 'json'
+    tickers, fp = _initAnalysis(which, start, end, minShift, maxShift, saveType)
     loadDataType = 'pickle'
     overwrite = True
     
