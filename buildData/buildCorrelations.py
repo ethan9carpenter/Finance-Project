@@ -5,6 +5,7 @@ from buildData.manageResults import loadResults, saveProgress
 from buildData.monitors import printMessage
 from buildData.manageFiles import deleteFile
 from time import time as currentTime
+import pandas as pd
 
 def getCorrelations(data, otherData, maxShift, minShift=0, shiftFactor=1, neg=True):
     correlations = []
@@ -31,7 +32,22 @@ def _removeCompleted(fp, tickers):
             tickers.remove(tick)
     return numComplete
 
-def _preprocess(stocks, fp, start, end, loadDataType, overwrite):
+
+def _calculateAllCorr(numComplete, totalToAnalyze, stocks, fp, maxShift, minShift, shiftFactor):
+    printMessage('Calculating Correlations')
+    for i, tick in enumerate(stocks.columns):
+        start = currentTime()
+        tickResults = pd.DataFrame()
+        tickData = stocks[tick].shift(minShift)
+        
+        for day in range(maxShift-minShift+1):
+            tickData = stocks[tick].shift(shiftFactor)
+            tickResults[day] = stocks.corrwith(tickData)
+        print(i+1+numComplete, 'out of', totalToAnalyze, currentTime()-start)
+        
+        saveProgress(fp, tickResults, tick)
+
+def performAnalysis(stocks, fp, start, end, maxShift, loadDataType, minShift=1, shiftFactor=1, overwrite=False):
     if overwrite:
         deleteFile(fp)
     totalToAnalyze = len(stocks)
@@ -39,22 +55,6 @@ def _preprocess(stocks, fp, start, end, loadDataType, overwrite):
     numComplete = _removeCompleted(fp, stocks)
     stocks = loadStocks(stocks, loadDataType, False)
     
-    return totalToAnalyze, numComplete, stocks
-
-def _calculateAllCorr(numComplete, totalToAnalyze, stocks, fp, maxShift, minShift, shiftFactor):
-    printMessage('Calculating Correlations')
-    for i, tick in enumerate(stocks.columns):
-        start = currentTime()
-        #tickResults = {}
-        stocks[tick] = stocks[tick].shift(minShift)
-        for _ in range(maxShift-minShift+1):
-            stocks[tick] = stocks[tick].shift(shiftFactor)
-            tickResults = stocks.corrwith(stocks[tick])
-        print(i+1+numComplete, 'out of', totalToAnalyze, currentTime()-start)
-        saveProgress(fp, tickResults, tick)
-
-def performAnalysis(stocks, fp, start, end, maxShift, loadDataType, minShift=1, shiftFactor=1, overwrite=False):
-    totalToAnalyze, numComplete, stocks, = _preprocess(stocks, fp, start, end, loadDataType, overwrite)
     _calculateAllCorr(numComplete, totalToAnalyze, stocks, fp, maxShift, minShift, shiftFactor)
     
 def _validateSymbols(symbols, start, end, what, fileType):
@@ -66,7 +66,7 @@ def _validateSymbols(symbols, start, end, what, fileType):
     writeStocks(invalid, start, end, what, fileType)
 
 def _initAnalysis(which, start, end, minShift, maxShift, saveType):
-    tickers = loadTickers(which)
+    tickers = loadTickers(which)[:100]
     fp = 'results/{}_{}_{}_{}_{}_{}.{}'.format(start.date(), end.date(), which, 
                                                  len(tickers), minShift, maxShift, saveType)
     printMessage('Init Info')

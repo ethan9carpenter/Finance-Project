@@ -4,7 +4,7 @@ import cProfile
 
 start = dt(2014, 1, 1)
 end  = dt(2018, 12, 20)
-which = 'fangs'
+which = 'sp500'
 minShift = 1
 maxShift = 1
 saveType = 'json'
