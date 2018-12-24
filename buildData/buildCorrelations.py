@@ -68,11 +68,15 @@ def _validateSymbols(symbols, start, end, what, fileType):
         if not exists('data/{}/{}.{}'.format(fileType, tick, fileType)):
             invalid.append(tick) 
     writeStocks(invalid, start, end, what, fileType)
-
+    
+def formatFP(start, end, which, tickers, minShift, maxShift, saveType):
+    baseFormat = 'results/{}_{}_{}_{}_{}_{}.{}' 
+    fp = baseFormat.format(start.date(), end.date(), which, len(tickers), minShift, maxShift, saveType)
+    return fp
+    
 def _initAnalysis(which, start, end, minShift, maxShift, saveType):
     tickers = loadTickers(which)
-    fp = 'results/{}_{}_{}_{}_{}_{}.{}'.format(start.date(), end.date(), which, 
-                                                 len(tickers), minShift, maxShift, saveType)
+    fp = formatFP(start, end, which, tickers, minShift, maxShift, saveType)
     printMessage('Init Info')
     print('Start Time:', dt.now(), '\nTotal Tickers:', len(tickers), '\nFile:', fp)
     
@@ -83,7 +87,7 @@ if __name__ == '__main__':
     end  = dt(2018, 12, 20)
     which = 'sp500'
     minShift = 1
-    maxShift = 1
+    maxShift = 10
     saveType = 'json'
     tickers, fp = _initAnalysis(which, start, end, minShift, maxShift, saveType)
     loadDataType = 'pickle'
@@ -91,5 +95,4 @@ if __name__ == '__main__':
     
     performAnalysis(stocks=tickers, start=start, end=end, minShift=minShift, 
                     maxShift=maxShift, fp=fp, loadDataType=loadDataType, overwrite=overwrite)
-    data = sortedDF(fp, ascending=False, dropSelf=True)
-    print(data)
+    
