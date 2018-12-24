@@ -1,6 +1,7 @@
 #MY IGNORING
-buildData/data
+buildData/data/*
 buildData/results/*
+buildData/backupResults/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

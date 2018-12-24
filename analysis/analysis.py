@@ -1,47 +1,24 @@
-from buildData.manageFiles import loadJSON
-from pprint import pprint as print
-from operator import itemgetter
 import os
-import pandas as pd
+from buildData.manageResults import asDF
 
-def moveDirUp():
+def moveDirUp(fileName):
     baseDir = os.getcwd()
-    baseDir = baseDir[:baseDir.rfind('/')]
-    os.chdir(baseDir)
-
-def convertToList(corrDict, minShift):
-    results = {}
-    for mainComp in corrDict:
-        results[mainComp] = []
-        for secondComp in corrDict[mainComp]:
-            for i, value in enumerate(corrDict[mainComp][secondComp]):
-                results[mainComp].append([value, i+minShift, secondComp])
+    baseDir = baseDir[:baseDir.rfind('/')] + '/'
     
-    return results
+    return baseDir + fileName
 
-def toDF(data):
-    formatted = []
-    for key in data:
-        for i, pair in enumerate(data[key]):
-            pair = [key] + pair + [i]
-            formatted.append(pair)
-    return pd.DataFrame(formatted, columns=['mainCompany', 'corr', 'dayShift', 'secondCompany', 'rank'])
+def sortedDF(fp, dropSelf, ascending=False, minCorr=-1, maxCorr=1, mainCompany=None, secondCompany=None):
+    data = asDF(fp, dropSelf=dropSelf)
+    data = data.sort_values('correlation', ascending=ascending)
+    data = data[minCorr <= data['correlation']]
+    data = data[data['correlation'] <= maxCorr]
     
-    
+    if mainCompany is not None:
+        data = data.xs(mainCompany, level='mainCompany')
+    if secondCompany is not None:
+        data = data.xs(secondCompany, level='secondCompany')
+    return data
 
-moveDirUp()
-data = loadJSON('buildData/results/2014-01-01_2018-12-20_fangs_4_35_200.json')
-minShift = 35
-results = convertToList(data, minShift)
-ordered = {}
-howMany = 4
-
-for company in results:
-    listed = results[company]
-    ordered[company] = sorted(listed, key=itemgetter(0), reverse=True)[:howMany]
-df = toDF(ordered)
-
+fp = moveDirUp('buildData/results/2014-01-01_2018-12-20_sp500_505_1_1.json')
+df = sortedDF(fp, dropSelf=True, mainCompany='AAPL')
 print(df)
-
-
-

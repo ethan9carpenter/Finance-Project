@@ -6,6 +6,10 @@ from buildData.monitors import printMessage
 from buildData.manageFiles import deleteFile
 from time import time as currentTime
 import pandas as pd
+#from analysis.analysis import sortedDF
+
+#Add overwrite prompt to make sure you don't overwrite
+#make a function to backup the data
 
 def getCorrelations(data, otherData, maxShift, minShift=0, shiftFactor=1, neg=True):
     correlations = []
@@ -40,8 +44,8 @@ def _calculateAllCorr(numComplete, totalToAnalyze, stocks, fp, maxShift, minShif
         tickResults = pd.DataFrame()
         tickData = stocks[tick].shift(minShift)
         
-        for day in range(maxShift-minShift+1):
-            tickData = stocks[tick].shift(shiftFactor)
+        for day in range(minShift, maxShift+1):
+            tickData = tickData.shift(shiftFactor)
             tickResults[day] = stocks.corrwith(tickData)
         print(i+1+numComplete, 'out of', totalToAnalyze, currentTime()-start)
         
@@ -66,7 +70,7 @@ def _validateSymbols(symbols, start, end, what, fileType):
     writeStocks(invalid, start, end, what, fileType)
 
 def _initAnalysis(which, start, end, minShift, maxShift, saveType):
-    tickers = loadTickers(which)[:100]
+    tickers = loadTickers(which)
     fp = 'results/{}_{}_{}_{}_{}_{}.{}'.format(start.date(), end.date(), which, 
                                                  len(tickers), minShift, maxShift, saveType)
     printMessage('Init Info')
@@ -79,11 +83,13 @@ if __name__ == '__main__':
     end  = dt(2018, 12, 20)
     which = 'sp500'
     minShift = 1
-    maxShift = 30
+    maxShift = 1
     saveType = 'json'
     tickers, fp = _initAnalysis(which, start, end, minShift, maxShift, saveType)
     loadDataType = 'pickle'
-    overwrite = True
+    overwrite = False
     
     performAnalysis(stocks=tickers, start=start, end=end, minShift=minShift, 
                     maxShift=maxShift, fp=fp, loadDataType=loadDataType, overwrite=overwrite)
+    data = sortedDF(fp, ascending=False, dropSelf=True)
+    print(data)
