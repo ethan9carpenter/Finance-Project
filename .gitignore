@@ -2,6 +2,7 @@
 buildData/data/*
 buildData/results/*
 buildData/backupResults/*
+*.zip
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
