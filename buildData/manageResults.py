@@ -3,6 +3,7 @@ import pandas as pd
 from os.path import exists
 from buildData.manageFiles import loadPickle, savePickle, saveJSON, loadJSON
 from pprint import pprint
+from contextlib import suppress
     
 def toPanel(fp):
     with open(fp, 'r') as file:
@@ -59,6 +60,31 @@ def _asList(fp):
                 dataList.append([mainCompany, secondCompany, shift, corr])
     
     return dataList
+
+def neatToDF(fp, dropSelf):
+    data = loadJSON(fp)
+    dataList = []
+    with suppress(TypeError):
+        for mainCompany in data:
+            for shift in data[mainCompany]:
+                for secondCompany in data[mainCompany][shift]:
+                    corr = data[mainCompany][shift][secondCompany]
+                    dataList.append([mainCompany, secondCompany, shift, corr])
+    data = dataList
+    columns = {'mainCompany': 'str',
+                'secondCompany': 'str',
+                'dayShift': 'int',
+                'correlation': 'float64'}
+    df = pd.DataFrame(data, columns=columns.keys())
+    for col, typ in columns.items():
+        df[col] = df[col].astype(typ)
+    if dropSelf:
+        df = df[df['mainCompany'] != df['secondCompany']]
+    df.set_index(['mainCompany', 'secondCompany'], inplace=True)
+    print(df)
+    return df
+    
+    
                 
 def saveProgress(fp, tickResults, tick):
     tickResults = pd.Series.to_json(tickResults)
@@ -72,9 +98,12 @@ def saveProgress(fp, tickResults, tick):
         saveJSON(fp, {tick: tickResults})
 
 def backupResults(fp):
-    pass
+    data = _tidyDictResults(fp)
+    fileName = fp[fp.find('/')+1:]
+    fp = 'backupResults/{}'.format(fileName)
+    saveJSON(fp, data)
 
 if __name__ == '__main__':
-    print(toDF('results/2014-01-01_2018-12-20_fangs_4_1_10.json'))
+    backupResults('results/2014-01-01_2018-12-20_sp500_505_1_10.json')
 
     

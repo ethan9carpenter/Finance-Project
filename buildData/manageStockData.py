@@ -4,6 +4,7 @@ import pandas as pd
 from buildData.manageFiles import loadJSON
 from buildData.monitors import printMessage
 from buildData.manageMemory import convertData
+from buildData.exchangeObjects import TickerList
 
 def getData(ticker, start=datetime(2017, 1, 1), end=datetime.now(), what='close'):
     data = get_historical_data(ticker, start, end, output_format='pandas')
@@ -45,5 +46,6 @@ def loadTickers(which):
         tickers = ['fb', 'aapl', 'googl', 'nflx']
     else:
         tickers = which
+    tickers = TickerList(tickers, name= which if isinstance(which, str) else None)
         
     return tickers

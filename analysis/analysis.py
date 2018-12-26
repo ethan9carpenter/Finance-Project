@@ -1,5 +1,5 @@
 import os
-from buildData.manageResults import asDF
+from buildData.manageResults import asDF, neatToDF
 import cProfile
 
 def moveDirUp(fileName):
@@ -10,13 +10,13 @@ def moveDirUp(fileName):
 
 def sortedDF(fp, dropSelf, ascending=False, minCorr=-1, maxCorr=1, mainCompany=None, secondCompany=None, dayShift=None):
     data = asDF(fp, dropSelf=dropSelf)
-    
+    #print(data)
     if mainCompany is not None:
         data = data.xs(mainCompany, level='mainCompany')
     if secondCompany is not None:
         data = data.xs(secondCompany, level='secondCompany')
     if dayShift is not None:
-        data = data[dayShift]
+        data = data[data['dayShift'] == dayShift]
         
     data = data.sort_values('correlation', ascending=ascending)
     data = data[minCorr <= data['correlation']]
@@ -25,7 +25,8 @@ def sortedDF(fp, dropSelf, ascending=False, minCorr=-1, maxCorr=1, mainCompany=N
     return data
 
 fp = moveDirUp('buildData/results/2014-01-01_2018-12-20_sp500_505_1_10.json')
+
 cProfile.run("""
-df = sortedDF(fp, dropSelf=True, secondCompany='VZ', dayShift=10)
+df = sortedDF(fp, dropSelf=True, mainCompany='VZ', dayShift=7)
 print(df)
-""")
+""", sort='cumtime')

@@ -3,7 +3,7 @@ from os.path import exists
 from buildData.manageStockData import loadTickers, writeStocks, loadStocks
 from buildData.manageResults import loadResults, saveProgress
 from buildData.monitors import printMessage
-from buildData.manageFiles import deleteFile
+from buildData.manageFiles import deleteFile, loadJSON
 from time import time as currentTime
 import pandas as pd
 #from analysis.analysis import sortedDF
@@ -37,7 +37,7 @@ def _removeCompleted(fp, tickers):
     return numComplete
 
 
-def _calculateAllCorr(numComplete, totalToAnalyze, stocks, fp, maxShift, minShift, shiftFactor):
+def _calculateAllCorr(numComplete, against, totalToAnalyze, stocks, fp, maxShift, minShift, shiftFactor):
     printMessage('Calculating Correlations')
     for i, tick in enumerate(stocks.columns):
         start = currentTime()
@@ -46,20 +46,27 @@ def _calculateAllCorr(numComplete, totalToAnalyze, stocks, fp, maxShift, minShif
         
         for day in range(minShift, maxShift+1):
             tickData = tickData.shift(shiftFactor)
-            tickResults[day] = stocks.corrwith(tickData)
+            tickResults[day] = against.corrwith(tickData)
         print(i+1+numComplete, 'out of', totalToAnalyze, currentTime()-start)
         
         saveProgress(fp, tickResults, tick)
 
-def performAnalysis(stocks, fp, start, end, maxShift, loadDataType, minShift=1, shiftFactor=1, overwrite=False):
+def performAnalysis(stocks, fp, start, end, maxShift, loadDataType, minShift=1, shiftFactor=1, overwrite=False, against=None):
     if overwrite:
         deleteFile(fp)
+    if against is None:
+        against = stocks
+        
     totalToAnalyze = len(stocks)
-    _validateSymbols(stocks, start, end, 'close', fileType=loadDataType)
+    allStocks = list(set(stocks) | set(against))
+    _validateSymbols(allStocks, start, end, 'close', fileType=loadDataType)
     numComplete = _removeCompleted(fp, stocks)
-    stocks = loadStocks(stocks, loadDataType, False)
+    allStocks = loadStocks(allStocks, loadDataType, False)
+    stocks = allStocks[list(stocks)]
+    against = allStocks[list(against)]
+    del allStocks
     
-    _calculateAllCorr(numComplete, totalToAnalyze, stocks, fp, maxShift, minShift, shiftFactor)
+    _calculateAllCorr(numComplete, against, totalToAnalyze, stocks, fp, maxShift, minShift, shiftFactor)
     
 def _validateSymbols(symbols, start, end, what, fileType):
     invalid = []
@@ -69,30 +76,35 @@ def _validateSymbols(symbols, start, end, what, fileType):
             invalid.append(tick) 
     writeStocks(invalid, start, end, what, fileType)
     
-def formatFP(start, end, which, tickers, minShift, maxShift, saveType):
-    baseFormat = 'results/{}_{}_{}_{}_{}_{}.{}' 
-    fp = baseFormat.format(start.date(), end.date(), which, len(tickers), minShift, maxShift, saveType)
+def formatFP(start, end, tickList, againstTL, minShift, maxShift, saveType):
+    baseFormat = 'results/{}_{}__{}_{}__{}_{}__{}_{}.{}' 
+    fp = baseFormat.format(start.date(), end.date(), len(tickList), tickList, len(againstTL), againstTL, 
+                           minShift, maxShift, saveType)
     return fp
     
-def _initAnalysis(which, start, end, minShift, maxShift, saveType):
-    tickers = loadTickers(which)
-    fp = formatFP(start, end, which, tickers, minShift, maxShift, saveType)
+def _initAnalysis(which, against, start, end, minShift, maxShift, saveType):
+    tickList = loadTickers(which)
+    againstTL = loadTickers(against)
+    fp = formatFP(start, end, tickList, againstTL, minShift, maxShift, saveType)
     printMessage('Init Info')
-    print('Start Time:', dt.now(), '\nTotal Tickers:', len(tickers), '\nFile:', fp)
+    print('Start Time:', dt.now(), '\nTotal Tickers:', len(tickList), '\nFile:', fp)
     
-    return tickers, fp
+    return tickList, fp
 
 if __name__ == '__main__':
     start = dt(2014, 1, 1)
     end  = dt(2018, 12, 20)
-    which = 'sp500'
+    which = 'fangs'
+    against = ['aapl', 'vz']
     minShift = 1
-    maxShift = 10
+    maxShift = 1
     saveType = 'json'
-    tickers, fp = _initAnalysis(which, start, end, minShift, maxShift, saveType)
+    tickers, fp = _initAnalysis(which, against, start, end, minShift, maxShift, saveType)
     loadDataType = 'pickle'
-    overwrite = False
+    overwrite = True
     
-    performAnalysis(stocks=tickers, start=start, end=end, minShift=minShift, 
+    performAnalysis(stocks=tickers, against=against, start=start, end=end, minShift=minShift, 
                     maxShift=maxShift, fp=fp, loadDataType=loadDataType, overwrite=overwrite)
+    from pprint import pprint
+    pprint(loadJSON(fp))
     
