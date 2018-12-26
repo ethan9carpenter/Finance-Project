@@ -83,27 +83,31 @@ def formatFP(start, end, tickList, againstTL, minShift, maxShift, saveType):
     return fp
     
 def _initAnalysis(which, against, start, end, minShift, maxShift, saveType):
+    if against is None:
+        against = which
     tickList = loadTickers(which)
     againstTL = loadTickers(against)
     fp = formatFP(start, end, tickList, againstTL, minShift, maxShift, saveType)
     printMessage('Init Info')
     print('Start Time:', dt.now(), '\nTotal Tickers:', len(tickList), '\nFile:', fp)
     
-    return tickList, fp
+    return tickList, againstTL, fp
 
 if __name__ == '__main__':
     start = dt(2014, 1, 1)
     end  = dt(2018, 12, 20)
     which = 'fangs'
-    against = ['aapl', 'vz']
+    against = ['vz']
     minShift = 1
     maxShift = 1
     saveType = 'json'
-    tickers, fp = _initAnalysis(which, against, start, end, minShift, maxShift, saveType)
     loadDataType = 'pickle'
     overwrite = True
     
-    performAnalysis(stocks=tickers, against=against, start=start, end=end, minShift=minShift, 
+    tickers, againstTL, fp = _initAnalysis(which, against, start, end, minShift, maxShift, saveType)
+    
+
+    performAnalysis(stocks=tickers, against=againstTL, start=start, end=end, minShift=minShift, 
                     maxShift=maxShift, fp=fp, loadDataType=loadDataType, overwrite=overwrite)
     from pprint import pprint
     pprint(loadJSON(fp))
