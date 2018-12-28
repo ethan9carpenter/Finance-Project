@@ -22,19 +22,25 @@ def writeStocks(tickers, start, end, what, fileType):
             df.to_json('data/json/{}.json'.format(tick))
         print(i+1, '/', len(tickers))
 
-def loadStocks(tickers, fileType, convert=False):
+def loadStocks(tickers, fileType, start, end, convert=False):
+    #===========================================================================
+    # ADD SOMETHING TO CHECK THAT STOCKS CONTAIN DATES
+    #===========================================================================
     if isinstance(tickers, str):
         if fileType == 'json':
             return pd.read_json('data/{}/{}.{}'.format(fileType, tickers, fileType))
         elif fileType == 'pickle':
-            return pd.read_pickle('data/{}/{}.{}'.format(fileType, tickers, fileType))
+            data = pd.read_pickle('data/{}/{}.{}'.format(fileType, tickers, fileType))
+            data = data.loc[start:end]
+            return data
     else:
         printMessage('Loading Stocks')
         stockData = pd.DataFrame()
         for tick in tickers:
-            stockData[tick] = loadStocks(tick, fileType)
+            stockData[tick] = loadStocks(tick, fileType, start=start, end=end)
         if convert:
             convertData(stockData)
+        stockData = stockData.loc[start:end]
         return stockData
 
 def loadTickers(which):
