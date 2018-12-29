@@ -1,9 +1,8 @@
 from datetime import datetime
 from iexfinance.stocks import get_historical_data
 import pandas as pd
-from buildData.manageFiles import loadJSON
+from managers import loadJSON#, convertData
 from buildData.monitors import printMessage
-from buildData.manageMemory import convertData
 from buildData.exchangeObjects import TickerList
 
 def getData(ticker, start=datetime(2017, 1, 1), end=datetime.now(), what='close'):

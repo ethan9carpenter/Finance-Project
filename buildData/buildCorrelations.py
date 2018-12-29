@@ -1,15 +1,11 @@
 from datetime import datetime as dt
 from os.path import exists
-from buildData.manageStockData import loadTickers, writeStocks, loadStocks
-from buildData.manageResults import loadResults, saveProgress
+from managers import loadTickers, writeStocks, loadStocks, deleteFile, loadJSON
+from buildData.manageResults import loadResults, saveProgress, backupResults
 from buildData.monitors import printMessage
-from buildData.manageFiles import deleteFile, loadJSON
 from time import time as currentTime
 import pandas as pd
-#from analysis.analysis import sortedDF
 
-#Add overwrite prompt to make sure you don't overwrite
-#make a function to backup the data
 
 def getCorrelations(data, otherData, maxShift, minShift=0, shiftFactor=1, neg=True):
     correlations = []
@@ -69,6 +65,7 @@ def performAnalysis(stocks, start, end, maxShift, loadDataType, saveType,
     del allStocks
     
     _calculateAllCorr(numComplete, against, totalToAnalyze, stocks, fp, maxShift, minShift, shiftFactor)
+    backupResults(fp)
     
     return fp
     
@@ -101,10 +98,10 @@ def _initAnalysis(which, start, end, minShift, maxShift, saveType, against='self
     return tickList, againstTL, fp
 
 if __name__ == '__main__':
-    start = dt(2014, 1, 1)
+    start = dt(2018, 1, 1)
     end  = dt(2018, 12, 20)
     which = 'fangs'
-    against = ['vz']
+    against = 'self'
     minShift = 1
     maxShift = 1
     saveType = 'json'

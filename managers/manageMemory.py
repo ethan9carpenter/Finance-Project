@@ -1,6 +1,5 @@
 import pandas as pd
-from buildData import manageStockData
-#from buildData.manageStockData import loadTickers
+from managers import manageStockData
 
 def memoryUsage(pandas_obj):
     if isinstance(pandas_obj,pd.DataFrame):
