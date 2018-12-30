@@ -2,22 +2,8 @@ import json
 import pandas as pd
 from os.path import exists
 from managers import loadPickle, savePickle, saveJSON, loadJSON
-from pprint import pprint
 from contextlib import suppress
-    
-def toPanel(fp):
-    with open(fp, 'r') as file:
-        data = json.load(file)
-        
-    panel = {}
-        
-    for tick in data:
-        df = pd.DataFrame.from_dict(data[tick], orient='index')
-        panel[tick] = df
-    
-    panel = pd.Panel.from_dict(panel)
-    
-    return panel
+from pandas.api.types import CategoricalDtype
 
 def loadResults(fp):
     if exists(fp):
@@ -38,16 +24,22 @@ def _tidyDictResults(fp):
 
 def asDF(fp, dropSelf):
     data = _asList(fp)
-    columns = {'mainCompany': 'category',
-                'secondCompany': 'category',
+    columns = {'mainCompany': None,
+                'secondCompany': None,
                 'dayShift': 'int',
                 'correlation': 'float64'}
     df = pd.DataFrame(data, columns=columns.keys())
+    
+    tickerCategories = CategoricalDtype(categories=list(set(df['mainCompany']) | set(df['secondCompany'])))
+    columns['mainCompany'] = tickerCategories
+    columns['secondCompany'] = tickerCategories
+    
     for col, typ in columns.items():
         df[col] = df[col].astype(typ)
     if dropSelf:
         df = df[df['mainCompany'] != df['secondCompany']]
     df.set_index(['mainCompany', 'secondCompany'], inplace=True)
+    print(df.dtypes)
 
     return df
     

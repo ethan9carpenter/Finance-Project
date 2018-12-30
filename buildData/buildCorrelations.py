@@ -59,7 +59,7 @@ def performAnalysis(stocks, start, end, maxShift, loadDataType, saveType,
     allStocks = list(set(stocks) | set(against))
     _validateSymbols(allStocks, start, end, 'close', fileType=loadDataType)
     numComplete = _removeCompleted(fp, stocks)
-    allStocks = loadStocks(allStocks, loadDataType, start, end, False)
+    allStocks = loadStocks(allStocks, loadDataType, start, end, convert=False)
     stocks = allStocks[list(stocks)]
     against = allStocks[list(against)]
     del allStocks
@@ -98,13 +98,16 @@ def _initAnalysis(which, start, end, minShift, maxShift, saveType, against='self
     return tickList, againstTL, fp
 
 if __name__ == '__main__':
-    start = dt(2018, 1, 1)
+    start = dt(2014, 1, 1)
     end  = dt(2018, 12, 20)
     which = 'fangs'
     against = 'self'
     minShift = 1
     maxShift = 1
     saveType = 'json'
+    #===========================================================================
+    # Fix manageStockData so that you can load JSON files to use instead of pickle
+    #===========================================================================
     loadDataType = 'pickle'
     overwrite = True
 

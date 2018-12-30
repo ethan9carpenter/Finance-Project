@@ -1,6 +1,5 @@
 from random import shuffle
 
-
 class TickerList():
     def __init__(self, tickers, name=None):
         self.tickers = [tick.lower() for tick in set(tickers)]
@@ -18,6 +17,9 @@ class TickerList():
     
     def __str__(self):
         return self.name
+    
+    def remove(self, key):
+        self.tickers.remove(key)   
     
     def trimTo(self, howMany, random=False, inplace=False):
         if random:
