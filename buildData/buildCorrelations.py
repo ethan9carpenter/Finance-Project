@@ -13,16 +13,12 @@ def getCorrelations(data, otherData, maxShift, minShift=0, shiftFactor=1, neg=Tr
     data = data.shift(minShift-1)
     
     for _ in range(1+maxShift-minShift):
-        #===========================================================================
-        # Costly: shift and corr
-        #===========================================================================
         data = data.shift(shiftFactor)
         corr = data.corr(otherData)
         if not neg and corr < 0:
             corr = -corr
         correlations.append(corr)
     return correlations
-
 
 def _removeCompleted(fp, tickers):        
     results = loadResults(fp)
@@ -32,7 +28,6 @@ def _removeCompleted(fp, tickers):
             numComplete += 1
             tickers.remove(tick)
     return numComplete
-
 
 def _calculateAllCorr(numComplete, against, totalToAnalyze, stocks, fp, maxShift, minShift, shiftFactor):
     printMessage('Calculating Correlations')
@@ -57,10 +52,10 @@ def performAnalysis(stocks, start, end, maxShift, loadDataType, saveType,
         deleteFile(fp)
         
     totalToAnalyze = len(stocks)
-    allStocks = list(set(stocks) | set(against))
+    allStocks = set(stocks) | set(against)
     _validateSymbols(allStocks, start, end, 'close', fileType=loadDataType)
     numComplete = _removeCompleted(fp, stocks)
-    allStocks = loadStocks(allStocks, loadDataType, start, end, convert=False)
+    allStocks = loadStocks(allStocks, loadDataType, start, end)
     stocks = allStocks[list(stocks)]
     against = allStocks[list(against)]
     del allStocks

@@ -24,18 +24,19 @@ def _tidyDictResults(fp):
 
 def asDF(fp, dropSelf):
     data = _asList(fp)
-    columns = {'mainCompany': None,
+    columns = ['mainCompany', 'secondCompany', 'dayShift', 'correlation']
+    types = {'mainCompany': None,
                 'secondCompany': None,
                 'dayShift': 'int',
                 'correlation': 'float64'}
-    df = pd.DataFrame(data, columns=columns.keys())
+    df = pd.DataFrame(data, columns=columns)
     
     tickerCategories = CategoricalDtype(categories=list(set(df['mainCompany']) | set(df['secondCompany'])))
-    columns['mainCompany'] = tickerCategories
-    columns['secondCompany'] = tickerCategories
-    
-    for col, typ in columns.items():
-        df[col] = df[col].astype(typ)
+    types['mainCompany'] = tickerCategories
+    types['secondCompany'] = tickerCategories
+
+    for col in df.columns:
+        df[col] = df[col].astype(types[col])
     if dropSelf:
         df = df[df['mainCompany'] != df['secondCompany']]
     df.set_index(['mainCompany', 'secondCompany'], inplace=True)
@@ -91,11 +92,12 @@ def saveProgress(fp, tickResults, tick):
 
 def backupResults(fp):
     data = _tidyDictResults(fp)
+    print(data)
     fileName = fp[fp.find('/')+1:]
     fp = 'backupResults/{}'.format(fileName)
     saveJSON(fp, data)
 
 if __name__ == '__main__':
-    backupResults('results/2014-01-01_2018-12-20_sp500_505_1_10.json')
+    backupResults('results/2014-01-01_2018-12-20_iex-8719_iex-8719_1_1.json')
 
     

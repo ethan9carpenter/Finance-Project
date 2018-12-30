@@ -1,9 +1,6 @@
 from random import shuffle
 from managers import loadJSON
 
-
-    
-
 class TickerList():
     def __init__(self, tickers, name=None):
         if isinstance(tickers, str):

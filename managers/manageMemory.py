@@ -26,10 +26,3 @@ def convertData(df):
     convertFloats(df)
     convertInts(df)
     return df
-
-if __name__ == '__main__':    
-    data = manageStockData.loadStocks(loadTickers('sp500'))
-    print(memoryUsage(data))
-    convertFloats(data)
-    convertInts(data)
-    print(memoryUsage(data))

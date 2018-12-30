@@ -1,6 +1,6 @@
 from iexfinance.stocks import get_historical_data
 import pandas as pd
-from managers import loadJSON#, convertData
+from managers import loadJSON
 from buildData.monitors import printMessage
 
 def getData(ticker, start, end, what='close'):
@@ -19,7 +19,7 @@ def writeStocks(tickers, start, end, what, fileType):
             df.to_json('data/json/{}.json'.format(tick), orient='index')
         print(i+1, '/', len(tickers))
 
-def loadStocks(tickers, fileType, start, end, convert=False):
+def loadStocks(tickers, fileType, start, end):
     #===========================================================================
     # ADD SOMETHING TO CHECK THAT STOCKS CONTAIN DATES
     #===========================================================================
@@ -35,8 +35,5 @@ def loadStocks(tickers, fileType, start, end, convert=False):
         stockData = pd.DataFrame()
         for tick in tickers:
             stockData[tick] = loadStocks(tick, fileType, start=start, end=end)
-        if convert:
-            convertData(stockData)
-        print(stockData)
         stockData = stockData.loc[start:end]
         return stockData
