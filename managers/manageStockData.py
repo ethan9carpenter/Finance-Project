@@ -1,9 +1,7 @@
-from datetime import datetime
 from iexfinance.stocks import get_historical_data
 import pandas as pd
 from managers import loadJSON#, convertData
 from buildData.monitors import printMessage
-from buildData.exchangeObjects import TickerList
 
 def getData(ticker, start, end, what='close'):
     data = get_historical_data(ticker, start, end, output_format='pandas')
@@ -42,16 +40,3 @@ def loadStocks(tickers, fileType, start, end, convert=False):
         print(stockData)
         stockData = stockData.loc[start:end]
         return stockData
-
-def loadTickers(which):
-    if which == 'iex':
-        tickers = loadJSON('tickerLists/iexSymbols.json')['valid']
-    elif which == 'sp500':
-        tickers = loadJSON('tickerLists/sp500tickers.json')
-    elif which == 'fangs':
-        tickers = ['fb', 'aapl', 'googl', 'nflx']
-    else:
-        tickers = which
-    tickers = TickerList(tickers, name= which if isinstance(which, str) else None)
-        
-    return tickers

@@ -1,10 +1,11 @@
 from datetime import datetime as dt
 from os.path import exists
-from managers import loadTickers, writeStocks, loadStocks, deleteFile, loadJSON
+from managers import writeStocks, loadStocks, deleteFile, loadJSON
 from buildData.manageResults import loadResults, saveProgress, backupResults
 from buildData.monitors import printMessage
 from time import time as currentTime
 import pandas as pd
+from buildData.tickers import TickerList
 
 
 def getCorrelations(data, otherData, maxShift, minShift=0, shiftFactor=1, neg=True):
@@ -89,8 +90,8 @@ def formatFP(start, end, tickList, againstTL, minShift, maxShift, saveType):
 def _initAnalysis(which, start, end, minShift, maxShift, saveType, against='self'):
     if against == 'self':
         against = which
-    tickList = loadTickers(which)
-    againstTL = loadTickers(against)
+    tickList = TickerList(which)
+    againstTL = TickerList(against)
     fp = formatFP(start, end, tickList, againstTL, minShift, maxShift, saveType)
     printMessage('Init Info')
     print('Start Time:', dt.now(), '\nTotal Tickers:', len(tickList), '\nFile:', fp)
