@@ -2,7 +2,6 @@ import json
 import pandas as pd
 from os.path import exists
 from managers import saveJSON, loadJSON
-#from buildData.cleanResults import _tidyDictResults
 
 def loadResults(fp):
     if exists(fp):
@@ -24,7 +23,7 @@ def saveProgress(fp, tickResults, tick):
             file.write((5*"{}").format('{', json.dumps(tick), ': ', tickResults, '}'))
 
 def backupResults(fp):
-    data = _tidyDictResults(fp)
+    data = loadJSON(fp)
     fileName = fp[fp.find('/')+1:]
     fp = 'backupResults/{}'.format(fileName)
     saveJSON(fp, data)

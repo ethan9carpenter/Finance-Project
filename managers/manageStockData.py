@@ -1,7 +1,7 @@
 from iexfinance.stocks import get_historical_data
 import pandas as pd
 from managers import loadJSON
-from buildData.monitors import printMessage
+from buildData import printMessage
 
 def getData(ticker, start, end, what='close'):
     data = get_historical_data(ticker, start, end, output_format='pandas')

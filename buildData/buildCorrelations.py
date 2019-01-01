@@ -2,7 +2,7 @@ from datetime import datetime as dt
 from os.path import exists
 from managers import writeStocks, loadStocks, deleteFile, loadJSON
 from buildData.manageResults import loadResults, saveProgress, backupResults
-from buildData.monitors import printMessage
+from buildData import printMessage
 from time import time as currentTime
 import pandas as pd
 from buildData.tickers import TickerList
@@ -100,7 +100,7 @@ if __name__ == '__main__':
 
     start = dt(2014, 1, 1)
     end  = dt(2018, 12, 20)
-    which = 'fangs'
+    which = 'iex'
     against = 'self'
     minShift = 1
     maxShift = 1
@@ -109,11 +109,11 @@ if __name__ == '__main__':
     # Fix manageStockData so that you can load JSON files to use instead of pickle
     #===========================================================================
     loadDataType = 'pickle'
-    overwrite = True
+    overwrite = False
 
     fp = performAnalysis(stocks=which, against=against, 
                          start=start, end=end, 
                          minShift=minShift, maxShift=maxShift, 
                          saveType=saveType, loadDataType=loadDataType, 
                          overwrite=overwrite)
-    #pprint(loadJSON(fp))
+    pprint(loadJSON(fp))
