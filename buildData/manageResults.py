@@ -1,9 +1,8 @@
 import json
 import pandas as pd
 from os.path import exists
-from managers import loadPickle, savePickle, saveJSON, loadJSON
-from contextlib import suppress
-from pandas.api.types import CategoricalDtype
+from managers import saveJSON, loadJSON
+#from buildData.cleanResults import _tidyDictResults
 
 def loadResults(fp):
     if exists(fp):
@@ -11,88 +10,21 @@ def loadResults(fp):
     else:        
         results = {}
     return results
-
-def _tidyDictResults(fp):
-    data = loadResults(fp)
-    for mainCompany in data:
-        for _ in data[mainCompany]:
-            try:
-                data[mainCompany] = json.loads(data[mainCompany])
-            except TypeError:
-                pass   
-    return data
-
-def asDF(fp, dropSelf):
-    data = _asList(fp)
-    columns = ['mainCompany', 'secondCompany', 'dayShift', 'correlation']
-    types = {'mainCompany': None,
-                'secondCompany': None,
-                'dayShift': 'int',
-                'correlation': 'float64'}
-    df = pd.DataFrame(data, columns=columns)
-    
-    tickerCategories = CategoricalDtype(categories=list(set(df['mainCompany']) | set(df['secondCompany'])))
-    types['mainCompany'] = tickerCategories
-    types['secondCompany'] = tickerCategories
-
-    for col in df.columns:
-        df[col] = df[col].astype(types[col])
-    if dropSelf:
-        df = df[df['mainCompany'] != df['secondCompany']]
-    df.set_index(['mainCompany', 'secondCompany'], inplace=True)
-    print(df.dtypes)
-
-    return df
-    
-def _asList(fp):
-    data = _tidyDictResults(fp)
-    dataList = []
-    for mainCompany in data:
-        for shift in data[mainCompany]:
-            for secondCompany, corr in data[mainCompany][shift].items():
-                dataList.append([mainCompany, secondCompany, shift, corr])
-    
-    return dataList
-
-def neatToDF(fp, dropSelf):
-    data = loadJSON(fp)
-    dataList = []
-    with suppress(TypeError):
-        for mainCompany in data:
-            for shift in data[mainCompany]:
-                for secondCompany in data[mainCompany][shift]:
-                    corr = data[mainCompany][shift][secondCompany]
-                    dataList.append([mainCompany, secondCompany, shift, corr])
-    data = dataList
-    columns = {'mainCompany': 'str',
-                'secondCompany': 'str',
-                'dayShift': 'int',
-                'correlation': 'float64'}
-    df = pd.DataFrame(data, columns=columns.keys())
-    for col, typ in columns.items():
-        df[col] = df[col].astype(typ)
-    if dropSelf:
-        df = df[df['mainCompany'] != df['secondCompany']]
-    df.set_index(['mainCompany', 'secondCompany'], inplace=True)
-    print(df)
-    return df
-    
-    
                 
 def saveProgress(fp, tickResults, tick):
     tickResults = pd.Series.to_json(tickResults)
     if exists(fp):
         with open (fp, mode="r+") as file:
             file.seek(0, 2) # move cursor to end
-            position = file.tell() - 1 #move back one
+            position = file.tell() - 1 # move back one
             file.seek(position) # move cursor
-            file.write( ",\n{}{}{}{}".format(json.dumps(tick), ': ', json.dumps(tickResults), '}'))
+            file.write(",\n{}{}{}{}".format(json.dumps(tick), ': ', tickResults, '}'))
     else:
-        saveJSON(fp, {tick: tickResults})
+        with open (fp, mode="w") as file:
+            file.write((5*"{}").format('{', json.dumps(tick), ': ', tickResults, '}'))
 
 def backupResults(fp):
     data = _tidyDictResults(fp)
-    print(data)
     fileName = fp[fp.find('/')+1:]
     fp = 'backupResults/{}'.format(fileName)
     saveJSON(fp, data)

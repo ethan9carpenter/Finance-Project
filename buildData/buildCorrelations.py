@@ -44,7 +44,7 @@ def _calculateAllCorr(numComplete, against, totalToAnalyze, stocks, fp, maxShift
         saveProgress(fp, tickResults, tick)
 
 def performAnalysis(stocks, start, end, maxShift, loadDataType, saveType, 
-                    minShift=1, shiftFactor=1, overwrite=False, against='self'):
+                    minShift=1, shiftFactor=1, overwrite=False, against='self', backupSize=10**6):
     
     stocks, against, fp = _initAnalysis(stocks, start, end, minShift, maxShift, saveType, against)
 
@@ -61,7 +61,9 @@ def performAnalysis(stocks, start, end, maxShift, loadDataType, saveType,
     del allStocks
     
     _calculateAllCorr(numComplete, against, totalToAnalyze, stocks, fp, maxShift, minShift, shiftFactor)
-    backupResults(fp)
+    
+    if len(stocks) * len(against) * (maxShift - minShift) > backupSize:
+        backupResults(fp)
     
     return fp
     
@@ -94,6 +96,8 @@ def _initAnalysis(which, start, end, minShift, maxShift, saveType, against='self
     return tickList, againstTL, fp
 
 if __name__ == '__main__':
+    from pprint import pprint
+
     start = dt(2014, 1, 1)
     end  = dt(2018, 12, 20)
     which = 'fangs'
@@ -112,6 +116,4 @@ if __name__ == '__main__':
                          minShift=minShift, maxShift=maxShift, 
                          saveType=saveType, loadDataType=loadDataType, 
                          overwrite=overwrite)
-    from pprint import pprint
-    pprint(loadJSON(fp))
-    
+    #pprint(loadJSON(fp))
