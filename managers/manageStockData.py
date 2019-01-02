@@ -9,7 +9,7 @@ def getData(ticker, start, end, what='close'):
     data.name = ticker
     return data
 
-def writeStocks(tickers, start, end, what, fileType):
+def writeStocks(tickers, start, end, fileType, what='close'):
     printMessage('Writing Stocks')
     for i, tick in enumerate(tickers):
         df = pd.DataFrame(getData(tick, start, end, what))
@@ -34,6 +34,7 @@ def loadStocks(tickers, fileType, start, end):
         printMessage('Loading Stocks')
         stockData = pd.DataFrame()
         for tick in tickers:
-            stockData[tick] = loadStocks(tick, fileType, start=start, end=end)
+            data = loadStocks(tick, fileType, start=start, end=end)
+            stockData[tick] = data[tick]
         stockData = stockData.loc[start:end]
         return stockData

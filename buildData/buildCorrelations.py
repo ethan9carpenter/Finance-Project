@@ -1,7 +1,7 @@
 from datetime import datetime as dt
 from os.path import exists
 from managers import writeStocks, loadStocks, deleteFile, loadJSON
-from buildData.manageResults import loadResults, saveProgress, backupResults
+from buildData.manageResults import loadResults, saveProgress, backupResults, formatFP
 from buildData import printMessage
 from time import time as currentTime
 import pandas as pd
@@ -21,7 +21,7 @@ def getCorrelations(data, otherData, maxShift, minShift=0, shiftFactor=1, neg=Tr
     return correlations
 
 def _removeCompleted(fp, tickers):        
-    results = loadResults(fp)
+    results = loadResults(fpInfo={'fp': fp})
     numComplete = 0
     for tick in results:
         if tick in tickers:
@@ -73,16 +73,7 @@ def _validateSymbols(symbols, start, end, what, fileType):
     for tick in symbols:
         if not exists('data/{}/{}.{}'.format(fileType, tick, fileType)):
             invalid.append(tick) 
-    writeStocks(invalid, start, end, what, fileType)
-    
-def formatFP(start, end, tickList, againstTL, minShift, maxShift, saveType):
-    baseFormat = 'results/{}_{}_{}-{}_{}-{}_{}-{}.{}' 
-    fp = baseFormat.format(start.date(), end.date(), 
-                           len(tickList), tickList, 
-                           len(againstTL), againstTL, 
-                           minShift, maxShift, 
-                           saveType)
-    return fp
+    writeStocks(invalid, start, end, what=what, fileType=fileType)
     
 def _initAnalysis(which, start, end, minShift, maxShift, saveType, against='self'):
     if against == 'self':
@@ -98,9 +89,9 @@ def _initAnalysis(which, start, end, minShift, maxShift, saveType, against='self
 if __name__ == '__main__':
     from pprint import pprint
 
-    start = dt(2014, 1, 1)
-    end  = dt(2018, 12, 20)
-    which = 'iex'
+    start = dt(2015, 1, 1)
+    end  = dt(2015, 12, 31)
+    which = 'sp500'
     against = 'self'
     minShift = 1
     maxShift = 1
@@ -109,11 +100,11 @@ if __name__ == '__main__':
     # Fix manageStockData so that you can load JSON files to use instead of pickle
     #===========================================================================
     loadDataType = 'pickle'
-    overwrite = False
-
+    overwrite = True
+    
     fp = performAnalysis(stocks=which, against=against, 
                          start=start, end=end, 
                          minShift=minShift, maxShift=maxShift, 
                          saveType=saveType, loadDataType=loadDataType, 
                          overwrite=overwrite)
-    pprint(loadJSON(fp))
+    #pprint(loadJSON(fp))

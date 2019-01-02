@@ -20,7 +20,7 @@ class TickerList():
         elif which == 'fangs':
             tickers = ['fb', 'aapl', 'googl', 'nflx']
         else:
-            tickers = which
+            tickers = [which] #assume just a single stock
             
         name = which if isinstance(which, str) else None
             

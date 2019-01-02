@@ -7,4 +7,7 @@ Model
 		-only decide buy/sell based on predicted increase/decrease
 		-model can decide when to buy and when to sell
 		-model only chooses to buy and sells regardless after a certain period
+		-Voting model where best comps vote whether to buy or sell, and make decision when % meets a threshold
+		-weight votes by correlation over a given period, perhaps use a variety of different correlation calculations (vary period length,
+		 time between periods, etc.) and have many submodels vote
 	-Backtest model on test dataset 
