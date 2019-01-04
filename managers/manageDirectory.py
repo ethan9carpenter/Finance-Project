@@ -1,7 +1,6 @@
-from os import getcwd
+from os import getcwd, chdir
 
-def moveDirUp(fileName, levels=1):
-    baseDir = getcwd()
+def moveDirUp(fileName=None, levels=1, inplace=False, baseDir=getcwd()):
     for _ in range(levels):
         if '/' in baseDir:
             baseDir = baseDir[:baseDir.rfind('/')]
@@ -9,5 +8,8 @@ def moveDirUp(fileName, levels=1):
         else:
             baseDir = baseDir[:baseDir.rfind('\\')]
             slash = '\\'
+    if inplace:
+        chdir(baseDir)
     
-    return baseDir + slash + fileName
+    if fileName is not None:
+        return baseDir + slash + fileName

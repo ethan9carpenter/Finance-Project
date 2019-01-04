@@ -1,10 +1,7 @@
 #MY IGNORING
-buildData/data/*
-buildData/dynamicResults/*
-buildData/backupResults/*
-buildData/dfResults/*
+*.json
 *.zip
-test.json
+*.pickle
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

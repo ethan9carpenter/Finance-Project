@@ -1,11 +1,12 @@
 from datetime import datetime as dt
-from os.path import exists
-from managers import writeStocks, loadStocks, deleteFile, loadJSON
-from buildData.manageResults import loadResults, saveProgress, backupResults, formatFP
+from managers import deleteFile, loadJSON
+from stockData import loadStocks
+from buildData.results import loadResults, saveProgress, backupResults, formatFP
 from buildData import printMessage
 from time import time as currentTime
 import pandas as pd
 from buildData.tickers import TickerList
+from stockData.manageStockData import validateSymbols
 
 
 def getCorrelations(data, otherData, maxShift, minShift=0, shiftFactor=1, neg=True):
@@ -53,7 +54,7 @@ def performAnalysis(stocks, start, end, maxShift, loadDataType, saveType,
         
     totalToAnalyze = len(stocks)
     allStocks = set(stocks) | set(against)
-    _validateSymbols(allStocks, start, end, 'close', fileType=loadDataType)
+    validateSymbols(allStocks, start, end, 'close', fileType=loadDataType)
     numComplete = _removeCompleted(fp, stocks)
     allStocks = loadStocks(allStocks, loadDataType, start, end)
     stocks = allStocks[list(stocks)]
@@ -66,14 +67,6 @@ def performAnalysis(stocks, start, end, maxShift, loadDataType, saveType,
         backupResults(fp)
     
     return fp
-    
-def _validateSymbols(symbols, start, end, what, fileType):
-    invalid = []
-    
-    for tick in symbols:
-        if not exists('data/{}/{}.{}'.format(fileType, tick, fileType)):
-            invalid.append(tick) 
-    writeStocks(invalid, start, end, what=what, fileType=fileType)
     
 def _initAnalysis(which, start, end, minShift, maxShift, saveType, against='self'):
     if against == 'self':
@@ -90,7 +83,7 @@ if __name__ == '__main__':
     from pprint import pprint
 
     start = dt(2015, 1, 1)
-    end  = dt(2015, 12, 31)
+    end  = dt(2018, 12, 31)
     which = 'sp500'
     against = 'self'
     minShift = 1
@@ -100,9 +93,11 @@ if __name__ == '__main__':
     # Fix manageStockData so that you can load JSON files to use instead of pickle
     #===========================================================================
     loadDataType = 'pickle'
-    overwrite = True
-    
-    fp = performAnalysis(stocks=which, against=against, 
+    overwrite = False
+    for i in range(2015, 2019):
+        start = dt(i, 1, 1)
+        end = dt(i, 12, 31)
+        fp = performAnalysis(stocks=which, against=against, 
                          start=start, end=end, 
                          minShift=minShift, maxShift=maxShift, 
                          saveType=saveType, loadDataType=loadDataType, 

@@ -3,15 +3,13 @@ import cProfile
 import numpy as np
 from pandas.api.types import CategoricalDtype
 import pandas as pd
-from time import time as currentTime
 
 
 def sortedDF(fp, dropSelf, ascending=False, minCorr=-1, maxCorr=1, primary=None, secondary=None, 
              dayShift=None, allPositive=False):
-    start = currentTime()
+
     data = asDF(fp, dropSelf=dropSelf)
-    print('asDF:', currentTime()-start)
-    start = currentTime()
+
     if primary is not None:
         data = data.xs(primary, level='primary')
     if secondary is not None:
@@ -24,7 +22,6 @@ def sortedDF(fp, dropSelf, ascending=False, minCorr=-1, maxCorr=1, primary=None,
     data = data.sort_values('correlation', ascending=ascending)
     data = data[minCorr <= data['correlation']]
     data = data[data['correlation'] <= maxCorr]
-    print('return:', currentTime()-start)
     return data
 
 def writeDF(fp, dropSelf):

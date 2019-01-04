@@ -1,42 +1,38 @@
-from buildData.results import writeDF, readDF
-import time
+from scipy import stats
+from buildData.results import sortedDF
+from buildData.choose import merge, choose
     
-def trim():    
-    from scipy import stats
-    from sklearn.linear_model import LinearRegression
-    import numpy as np
-    import pandas as pd
-    from buildData.results import sortedDF
+def trim(fp, years=range(2015, 2019), ascending=True, dropSelf=False, allPositive=False,
+         primary=None, secondary=None, dayShift=None):
     
-    fp = 'results/{}-01-01_{}-12-31_505-sp500_505-sp500_1-100.json'
-    df = pd.DataFrame()
-    for year in range(2015, 2019):
-        data = sortedDF(fp.format(year, year), dropSelf=True, allPositive=True, primary=None)
-        #print(data)
-        df[str(year)] = data['correlation']
+    data = {}
+    for year in years:
+        data[str(year)] = sortedDF(fp.format(year, year), dropSelf=dropSelf, allPositive=allPositive, 
+                                   primary=primary, secondary=secondary, dayShift=dayShift)
+    df = merge(data)
     
-    print(df.sort_values('2018', ascending=False))
-    critVal = -1
-    
-    df = df[df['2015'] > critVal]
-    df = df[df['2016'] > critVal]
-    #df = df[df['2017'] > critVal]
-    
-    
-    df['geomean'] = stats.gmean(df.iloc[:,0:1], axis=1)
-    #df = df[df['geomean'] > critVal]
-    df.sort_values('2017', ascending=False, inplace=True)
-    
+    return choose(df, sigCols=df.columns[:-1], sigVal=.5)
+    exit()
     df.dropna(inplace=True)
+
+    for year in years[:-1]:
+        df = df[df[str(year)] > 0.5]
     
-    clf = LinearRegression()
-    clf.fit(X=np.array(df[['2015', '2016']]), y=np.array(df['2017']))
+    df['geo'] = stats.gmean(df.iloc[:,0:3], axis=1)
+    df.sort_values('geo', ascending=False, inplace=True)
+    print(df.head(10))
     
-    print(df.describe()) 
-    print(clf.score(X=np.array(df[['2015', '2016']]), y=np.array(df['2017'])))
+    #df.sort_values('2017', ascending=False, inplace=True)
+    
+    #df.dropna(inplace=True)
+    print(df.describe()['2018']) 
 
 
 def printPartial(fp, numChars=10000):
     with open(fp, 'r') as file:
         cont = file.read()
         print(cont[:numChars])
+        
+if __name__ == '__main__':
+    fp = 'dynamicResults/{}-01-01_{}-12-31_4-fangs_4-fangs_1-100.json'
+    trim(fp=fp, allPositive=True, dropSelf=True)
