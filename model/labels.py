@@ -1,54 +1,49 @@
 from pandas import DataFrame
 import numpy as np
+    
+def formatData(stockData, how, typ, asNumpy=False, minChange=0):
+    """
+    -stockData should be a series of a single stock that is the label
+    
+    how:
+    -'regress' (data is returned as values)
+    -'classify' (data becomes True/False based on whether it is an increase over the previous day)
+    
+    typ:
+    -'percent': percent change
+    -'price': dollar values
+    """    
+    if how == 'regress':
+        data = _regressData(stockData, typ)
+    elif how == 'classify':
+        data = _classifyData(stockData, typ, minChange)
+    """
+    Get rid of class and make everything use format data, deciding whether price/percent change and
+    then choose whether you want it as 'regress' or 'classify'
+    """
+        
+    
+    if asNumpy:
+        data = np.array(data)
+    return data
 
-class LabelType():
-    def __init__(self, typ, minChange=0, changeType=None):
-        """
-        if changeType == 0:
-            change type is dollars
-        else:
-            change type is percent change
-        
-        """
-        self.typ = typ
-        self.minChange = minChange
-        self.changeType = changeType
-            
-        if typ == 'regress':
-            self.formatter = _regress
-        elif typ == 'classify':
-            if changeType == 0:
-                self.formatter = _classifyDollars
-            else:
-                self.formatter = _classifyPercent
-            
-        
-    def __str__(self):
-        return self.typ
+def _regressData(stockData, typ):
+    df = DataFrame(stockData)
+    if typ == 'percent':
+        df = df.pct_change()
     
-    def formatY(self, stockData, asNumpy=False):
-        #stockData should be a series of a single stock that is the label
-        data = self.formatter(stockData, self.minChange)
-        
-        if asNumpy:
-            data = np.array(data)
-        return data
-        
-def _regress(stockData, *unused):
-    return stockData
+    return df
 
-def _classifyPercent(stockData, minChange):
-    df = DataFrame()
-    df['data'] = stockData.pct_change()
-    df['label'] = df['data'] > minChange
+def _classifyData(stockData, typ, minChange):
+    df = DataFrame(stockData)
     
-    return df['label']
+    if typ == 'percent':
+        df = df.pct_change()
+    elif typ == 'value':
+        df = df.diff()
     
-def _classifyDollars(stockData, minChange):
-    df = DataFrame()
-    df['old'] = stockData
-    df['new'] = stockData.shift(-1)
-    df['label'] = df['new'] > df['old'] + minChange
+    for col in df.columns:
+        df[col] = df[col] > minChange
     
-    return df['label']
+    return df
     

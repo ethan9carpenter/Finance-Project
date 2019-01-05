@@ -1,7 +1,7 @@
 import pandas as pd
 from stockData import loadStocks
 from buildData.results import sortedDF
-from model.labels import LabelType
+from model.labels import formatData
 
 def _trimToSig(data, sigCols, sigVal):
     for col in sigCols:
@@ -57,17 +57,19 @@ def buildFeatureDF(baseFP, start, end, primary, sigVal, dropSelf=False):
     
     return df
 
-def splitXY(featureDF, labelType, labelColumn=-1):
+def splitXY(featureDF, how, typ, labelColumn=-1):
     X = featureDF.drop(featureDF.columns[labelColumn], axis=1)
     y = featureDF[featureDF.columns[labelColumn]]
-    X = np.array(X)
-    y = labelType.formatY(y)
+    #X = np.array(X)
+    X = formatData(X, how=how, typ=typ)
+    y = formatData(y, how=how, typ=typ)
     
     return X, y
     
 if __name__ == '__main__':
     from datetime import datetime as dt
     from sklearn.neural_network import MLPRegressor, MLPClassifier
+    from sklearn.svm import LinearSVC
     import numpy as np
     from sklearn.model_selection import train_test_split
     from managers import moveDirUp
@@ -78,7 +80,7 @@ if __name__ == '__main__':
     
     
     ticker = 'aapl'
-    sigVal = 0.6
+    sigVal = 0.2
     typ = 'classify'
     start = 2015
     end = 2018
@@ -87,29 +89,32 @@ if __name__ == '__main__':
     df = buildFeatureDF(fp, dt(start, 1, 1), dt(end, 12, 31), primary=ticker, sigVal=sigVal, dropSelf=False)
 
     df.dropna(inplace=True)
-    X, y = splitXY(df, LabelType(typ, changeType=1))
+    X, y = splitXY(df, how='classify', typ='value')
     xTrain, xTest, yTrain, yTest = train_test_split(X, y, test_size=1/(end-start+1), shuffle=False)
-
+    
     def actualReturn():
-        _, data = splitXY(df, LabelType('regress'))
-        *_, data = train_test_split(X, data, test_size=1/(end-start+1), shuffle=False)
+        data = df[ticker]
+        data = data.iloc[-int(len(data)/(end-start+1)):]
+
         actualRet = (data.iloc[-1] - data.iloc[0]) / data.iloc[0]
         return actualRet  
     
     clf = MLPClassifier()
     clf.fit(xTrain, yTrain)
+    trainScore = clf.score(xTrain, yTrain)
 
-    if clf.score(xTrain, yTrain) > .5:
+    if trainScore > 0.5:
         score = clf.score(xTest, yTest)
     else:
         score = 1 - clf.score(xTest, yTest)
+        trainScore = 1 - trainScore
         print('switch')
     ret = 2 * (score - .5)
     actualRet = actualReturn()
     
 
     print('Significant Companies', len(df.columns))
-    print('Train Score:', max(1-clf.score(xTrain, yTrain), clf.score(xTrain, yTrain)))
+    print('Train Score:', '{:.3}'.format(trainScore))
     print('Return:', '{:.3}%'.format(100*ret))
     print('Actual Return:', '{:.3}%'.format(100*actualRet))
     print('Difference:', '{:.3}%'.format(100*(ret-actualRet)))
