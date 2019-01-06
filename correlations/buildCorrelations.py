@@ -1,11 +1,11 @@
 from datetime import datetime as dt
 from managers import deleteFile, loadJSON
 from stockData import loadStocks
-from buildData.results import loadResults, saveProgress, backupResults, formatFP
-from buildData import printMessage
+from correlations.results import loadResults, saveProgress, backupResults, formatFP
+from correlations import printMessage
 from time import time as currentTime
 import pandas as pd
-from buildData.tickers import TickerList
+from correlations.tickers import TickerList
 from stockData.manageStockData import validateSymbols
 
 
@@ -87,14 +87,14 @@ if __name__ == '__main__':
     which = 'fangs'
     against = 'self'
     minShift = 1
-    maxShift = 100
+    maxShift = 1
     saveType = 'json'
     #===========================================================================
     # Fix manageStockData so that you can load JSON files to use instead of pickle
     #===========================================================================
     loadDataType = 'pickle'
-    overwrite = False
-    for i in range(2015, 2019):
+    overwrite = True
+    for i in range(2015, 2016):
         start = dt(i, 1, 1)
         end = dt(i, 12, 31)
         fp = performAnalysis(stocks=which, against=against, 

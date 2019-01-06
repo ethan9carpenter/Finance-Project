@@ -2,7 +2,7 @@ import json
 import pandas as pd
 from os.path import exists
 from managers import saveJSON, loadJSON
-from buildData.results import asDF
+from correlations.results import asDF
 from datetime import datetime
 
 def loadResults(fpInfo, returnType='json'):
