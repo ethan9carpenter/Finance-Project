@@ -1,5 +1,8 @@
 from random import shuffle
 from managers import loadJSON
+from os import path
+
+dataFolder = path.dirname(path.abspath(__file__)) + '/tickerLists' 
 
 class TickerList():
     def __init__(self, tickers, name=None):
@@ -14,9 +17,9 @@ class TickerList():
         
     def _loadTickerPack(self, which):
         if which == 'iex':
-            tickers = loadJSON('tickerLists/iexSymbols.json')['valid']
+            tickers = loadJSON(dataFolder, 'tickerLists/iexSymbols.json')['valid']
         elif which == 'sp500':
-            tickers = loadJSON('tickerLists/sp500tickers.json')
+            tickers = loadJSON(dataFolder, '/sp500tickers.json')
         elif which == 'fangs':
             tickers = ['fb', 'aapl', 'googl', 'nflx']
         else:

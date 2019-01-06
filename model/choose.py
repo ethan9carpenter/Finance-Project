@@ -2,6 +2,7 @@ import pandas as pd
 from stockData import loadStocks
 from buildData.results import sortedDF
 from model.labels import formatData
+from datetime import datetime as dt
 
 def _trimToSig(data, sigCols, sigVal):
     for col in sigCols:
@@ -50,71 +51,34 @@ def buildFeatureDF(baseFP, start, end, primary, sigVal, dropSelf=False):
     data = {}
 
     for year in range(start.year, end.year+1):
-        data[str(year)] = sortedDF(baseFP.format(year, year), dropSelf=dropSelf, allPositive=True)
+        data[str(year)] = sortedDF(baseFP.format(dt(year, 1, 1).date(), dt(year, 12, 31).date()), dropSelf=dropSelf, allPositive=True)
     df = _merge(data)
     df = _trimToSig(df, sigCols=df.columns[:-1], sigVal=sigVal)
     df = _buildSelectionDF(_selectSignificant(df), primary, start=start, end=end)
     
     return df
 
-def splitXY(featureDF, how, typ, labelColumn=-1):
+def splitXY(featureDF, xHow, xTyp, yHow, yTyp, labelColumn=-1):
     X = featureDF.drop(featureDF.columns[labelColumn], axis=1)
     y = featureDF[featureDF.columns[labelColumn]]
-    #X = np.array(X)
-    X = formatData(X, how=how, typ=typ)
-    y = formatData(y, how=how, typ=typ)
+
+    X = formatData(X, how=xHow, typ=xTyp)
+    y = formatData(y, how=yHow, typ=yTyp)
+    X, y = _handleNaN(X, y)
     
     return X, y
     
-if __name__ == '__main__':
-    from datetime import datetime as dt
-    from sklearn.neural_network import MLPRegressor, MLPClassifier
-    from sklearn.svm import LinearSVC
-    import numpy as np
-    from sklearn.model_selection import train_test_split
-    from managers import moveDirUp
-    #===========================================================================
-    # build to handle lower and uppercase tickers
-    #===========================================================================
+def _handleNaN(X, y):
+    X.dropna(inplace=True)
+    y.dropna(inplace=True)
+    
+    if len(y) > len(X):
+        y = y.loc[X.index[0]:X.index[-1]]
+    elif len(y) < len(X):
+        X = X.loc[y.index[0]:y.index[-1]]
+        
+    return X, y
     
     
     
-    ticker = 'aapl'
-    sigVal = 0.2
-    typ = 'classify'
-    start = 2015
-    end = 2018
     
-    fp = moveDirUp('buildData/dynamicResults/{}-01-01_{}-12-31_505-sp500_505-sp500_1-1.json', levels=1)
-    df = buildFeatureDF(fp, dt(start, 1, 1), dt(end, 12, 31), primary=ticker, sigVal=sigVal, dropSelf=False)
-
-    df.dropna(inplace=True)
-    X, y = splitXY(df, how='classify', typ='value')
-    xTrain, xTest, yTrain, yTest = train_test_split(X, y, test_size=1/(end-start+1), shuffle=False)
-    
-    def actualReturn():
-        data = df[ticker]
-        data = data.iloc[-int(len(data)/(end-start+1)):]
-
-        actualRet = (data.iloc[-1] - data.iloc[0]) / data.iloc[0]
-        return actualRet  
-    
-    clf = MLPClassifier()
-    clf.fit(xTrain, yTrain)
-    trainScore = clf.score(xTrain, yTrain)
-
-    if trainScore > 0.5:
-        score = clf.score(xTest, yTest)
-    else:
-        score = 1 - clf.score(xTest, yTest)
-        trainScore = 1 - trainScore
-        print('switch')
-    ret = 2 * (score - .5)
-    actualRet = actualReturn()
-    
-
-    print('Significant Companies', len(df.columns))
-    print('Train Score:', '{:.3}'.format(trainScore))
-    print('Return:', '{:.3}%'.format(100*ret))
-    print('Actual Return:', '{:.3}%'.format(100*actualRet))
-    print('Difference:', '{:.3}%'.format(100*(ret-actualRet)))

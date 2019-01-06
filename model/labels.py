@@ -12,7 +12,9 @@ def formatData(stockData, how, typ, asNumpy=False, minChange=0):
     typ:
     -'percent': percent change
     -'price': dollar values
-    """    
+    """
+    __handleInput(how, typ)
+    
     if how == 'regress':
         data = _regressData(stockData, typ)
     elif how == 'classify':
@@ -31,6 +33,8 @@ def _regressData(stockData, typ):
     df = DataFrame(stockData)
     if typ == 'percent':
         df = df.pct_change()
+    elif typ == 'price':
+        pass
     
     return df
 
@@ -39,11 +43,16 @@ def _classifyData(stockData, typ, minChange):
     
     if typ == 'percent':
         df = df.pct_change()
-    elif typ == 'value':
+    elif typ == 'price':
         df = df.diff()
     
     for col in df.columns:
         df[col] = df[col] > minChange
     
     return df
-    
+
+def __handleInput(how, typ):
+    if how not in ['classify', 'regress']:
+        raise Exception()
+    elif typ not in ['price', 'percent']:
+        raise Exception()

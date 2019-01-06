@@ -84,10 +84,10 @@ if __name__ == '__main__':
 
     start = dt(2015, 1, 1)
     end  = dt(2018, 12, 31)
-    which = 'sp500'
+    which = 'fangs'
     against = 'self'
     minShift = 1
-    maxShift = 1
+    maxShift = 100
     saveType = 'json'
     #===========================================================================
     # Fix manageStockData so that you can load JSON files to use instead of pickle

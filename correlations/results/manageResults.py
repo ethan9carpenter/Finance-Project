@@ -3,6 +3,7 @@ import pandas as pd
 from os.path import exists
 from managers import saveJSON, loadJSON
 from buildData.results import asDF
+from datetime import datetime
 
 def loadResults(fpInfo, returnType='json'):
     #===========================================================================
@@ -24,12 +25,26 @@ def loadResults(fpInfo, returnType='json'):
 
 def formatFP(start, end, tickList, againstTL, minShift, maxShift, saveType):
     baseFormat = 'dynamicResults/{}_{}_{}-{}_{}-{}_{}-{}.{}' 
-    fp = baseFormat.format(start.date(), end.date(), 
+    start, end = _handleFP(start, end)
+    
+    
+    fp = baseFormat.format(start, end, 
                            len(tickList), tickList, 
                            len(againstTL), againstTL, 
                            minShift, maxShift, 
                            saveType)
     return fp
+
+def _handleFP(start, end):
+    if not isinstance(start, datetime):
+        start = '{}'
+    else:
+        start = start.date()
+    if not isinstance(end, datetime):
+        end = '{}'
+    else:
+        end = end.date()
+    return start, end
                 
 def saveProgress(fp, tickResults, tick):
     tickResults = pd.Series.to_json(tickResults)

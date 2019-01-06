@@ -7,7 +7,8 @@ def saveJSON(fp, data):
     with open(fp, 'w') as file:
         json.dump(data, file)
 
-def loadJSON(fp):
+def loadJSON(*fp):
+    fp = ''.join(fp)
     try:
         with open(fp) as file:
                 results = json.load(file)

@@ -37,11 +37,12 @@ def loadStocks(tickers, fileType, start, end):
     #===========================================================================
     if isinstance(tickers, str):
         if fileType == 'json':
-            return pd.read_json('{}/{}/{}.{}'.format(dataFolder, fileType, tickers, fileType), orient='index')
+            data = pd.read_json('{}/{}/{}.{}'.format(dataFolder, fileType, tickers, fileType), orient='index')
         elif fileType == 'pickle':
             data = pd.read_pickle('{}/{}/{}.{}'.format(dataFolder, fileType, tickers, fileType))
             data = data.loc[start:end]
-            return data
+        
+        return data
     else:
         printMessage('Loading Stocks')
         stockData = pd.DataFrame()
