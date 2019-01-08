@@ -1,14 +1,15 @@
 from datetime import datetime as dt
+from managers import moveDirUp
+from model import buildFeatureDF, splitXY
+from correlations import TickerList, formatFP
+import pandas as pd
+import numpy as np
+
 from sklearn.neural_network import MLPRegressor, MLPClassifier
 from sklearn.svm import LinearSVC, LinearSVR
 from sklearn.model_selection import train_test_split
-from managers import moveDirUp
-from model.choose import buildFeatureDF, splitXY
-from buildData.tickers import TickerList
-from buildData.buildCorrelations import formatFP
-import pandas as pd
 from sklearn.linear_model.base import LinearRegression
-import numpy as np
+
 
 def actualReturn(data, ticker=None, start=None, end=None):
         if isinstance(data, pd.DataFrame):

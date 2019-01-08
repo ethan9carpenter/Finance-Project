@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
-from buildData.cleanResults import moveDirUp, sortedDF
+from correlations.results import sortedDF
+from managers import moveDirUp
 
 fp = moveDirUp('correlations/results/2014-01-01_2018-12-20_505-sp500_505-sp500_1-1.json')
 

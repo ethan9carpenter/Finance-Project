@@ -5,7 +5,7 @@ from correlations import printMessage
 from os import path
 
 #To load data from the proper folder
-dataFolder = path.dirname(path.abspath(__file__)) + '/data' 
+__dataFolder = path.dirname(path.abspath(__file__)) + '/data' 
 
 def validateSymbols(symbols, start, end, what, fileType):
     """
@@ -25,7 +25,7 @@ def validateSymbols(symbols, start, end, what, fileType):
     invalid = []
     
     for tick in symbols:
-        if not path.exists('{}/{}/{}.{}'.format(dataFolder, fileType, tick, fileType)):
+        if not path.exists('{}/{}/{}.{}'.format(__dataFolder, fileType, tick, fileType)):
             invalid.append(tick) 
     writeStocks(invalid, start, end, what=what, fileType=fileType)
 
@@ -63,9 +63,9 @@ def writeStocks(tickers, start, end, fileType, what='close'):
     for i, tick in enumerate(tickers):
         df = pd.DataFrame(getData(tick, start, end, what))
         if fileType == 'pickle':
-            df.to_pickle('{}/pickle/{}.pickle'.format(dataFolder, tick))
+            df.to_pickle('{}/pickle/{}.pickle'.format(__dataFolder, tick))
         elif fileType == 'json':
-            df.to_json('{}/json/{}.json'.format(dataFolder, tick), orient='index')
+            df.to_json('{}/json/{}.json'.format(__dataFolder, tick), orient='index')
         print(i+1, '/', len(tickers))
 
 def loadStocks(tickers, fileType, start, end):
@@ -86,9 +86,9 @@ def loadStocks(tickers, fileType, start, end):
     """
     if isinstance(tickers, str):
         if fileType == 'json':
-            data = pd.read_json('{}/{}/{}.{}'.format(dataFolder, fileType, tickers, fileType), orient='index')
+            data = pd.read_json('{}/{}/{}.{}'.format(__dataFolder, fileType, tickers, fileType), orient='index')
         elif fileType == 'pickle':
-            data = pd.read_pickle('{}/{}/{}.{}'.format(dataFolder, fileType, tickers, fileType))
+            data = pd.read_pickle('{}/{}/{}.{}'.format(__dataFolder, fileType, tickers, fileType))
             data = data.loc[start:end]
         
         return data

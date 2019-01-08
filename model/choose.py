@@ -1,8 +1,13 @@
 import pandas as pd
 from stockData import loadStocks
-from buildData.results import sortedDF
-from model.labels import formatData
+from correlations.results import sortedDF
+from model import formatData
 from datetime import datetime as dt
+from managers import saveJSON
+from os import path
+
+#To load data from the proper folder
+__fileFolder = path.dirname(path.abspath(__file__)) + '/data' 
 
 def _trimToSig(data, sigCols, sigVal):
     for col in sigCols:
@@ -47,15 +52,16 @@ def _buildSelectionDF(sigData, stock, start, end):
     
     return selectionDF
 
-def buildFeatureDF(baseFP, start, end, primary, sigVal, dropSelf=False):
+def buildFeatureDF(yearlessFP, start, end, primary, sigVal, dropSelf=False):
     data = {}
 
     for year in range(start.year, end.year+1):
-        data[str(year)] = sortedDF(baseFP.format(dt(year, 1, 1).date(), dt(year, 12, 31).date()), dropSelf=dropSelf, allPositive=True)
+        data[str(year)] = sortedDF(yearlessFP.format(dt(year, 1, 1).date(), dt(year, 12, 31).date()), 
+                                   dropSelf=dropSelf, allPositive=True)
     df = _merge(data)
     df = _trimToSig(df, sigCols=df.columns[:-1], sigVal=sigVal)
     df = _buildSelectionDF(_selectSignificant(df), primary, start=start, end=end)
-    
+
     return df
 
 def splitXY(featureDF, xHow, xTyp, yHow, yTyp, labelColumn=-1):
@@ -78,7 +84,29 @@ def _handleNaN(X, y):
         X = X.loc[y.index[0]:y.index[-1]]
         
     return X, y
+
+def writeSignificant(yearlessFP, start, end, sigVal=0, allPositive=False):
+    data = {}
+
+    for year in range(start.year, end.year+1):
+        data[str(year)] = sortedDF(yearlessFP.format(dt(year, 1, 1).date(), dt(year, 12, 31).date()), 
+                                   allPositive=allPositive)
+    df = _merge(data)
+    df = _trimToSig(df, sigCols=df.columns[:-1], sigVal=sigVal)
     
+    df.reset_index(inplace=True)
+    primary = set(list(df['primary']))
+
+    sigDict = {}
+    for company in primary:
+        sig = df[df['primary'] == company]
+        sig = list(zip(df[['secondary', 'dayShift']]))
+        sigDict[company] = sig
+        
+    writeFP = 'significantPairs/significant_' + yearlessFP.format(start.year, end.year)
     
+    saveJSON(__fileFolder, writeFP, data=sigDict)
+    
+    return sigDict
     
     

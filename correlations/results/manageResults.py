@@ -1,9 +1,11 @@
 import json
 import pandas as pd
-from os.path import exists
+from os import path
 from managers import saveJSON, loadJSON
 from correlations.results import asDF
 from datetime import datetime
+
+__dataFolder = path.dirname(path.abspath(__file__)) + '/tickerLists' 
 
 def loadResults(fpInfo, returnType='json'):
     #===========================================================================
@@ -14,7 +16,7 @@ def loadResults(fpInfo, returnType='json'):
     else:
         fp = formatFP(fpInfo['start'], fpInfo['end'], fpInfo['tickList'], fpInfo['againstTL'], 
                       fpInfo['minShift'], fpInfo['maxShift'], fpInfo['saveType'])
-    if exists(fp):
+    if path.exists(fp):
         if returnType == 'json':
             results = loadJSON(fp)
         elif returnType == 'df':
@@ -24,7 +26,7 @@ def loadResults(fpInfo, returnType='json'):
     return results
 
 def formatFP(start, end, tickList, againstTL, minShift, maxShift, saveType):
-    baseFormat = 'dynamicResults/{}_{}_{}-{}_{}-{}_{}-{}.{}' 
+    baseFormat = __dataFolder + 'dynamicResults/{}_{}_{}-{}_{}-{}_{}-{}.{}' 
     start, end = _handleFP(start, end)
     
     
@@ -48,7 +50,7 @@ def _handleFP(start, end):
                 
 def saveProgress(fp, tickResults, tick):
     tickResults = pd.Series.to_json(tickResults)
-    if exists(fp):
+    if path.exists(fp):
         with open (fp, mode="r+") as file:
             file.seek(0, 2) # move cursor to end
             position = file.tell() - 1 # move back one
@@ -62,9 +64,6 @@ def backupResults(fp):
     data = loadJSON(fp)
     fileName = fp[fp.find('/')+1:]
     fp = 'backupResults/{}'.format(fileName)
-    saveJSON(fp, data)
-
-if __name__ == '__main__':
-    backupResults('results/2014-01-01_2018-12-20_iex-8719_iex-8719_1_1.json')
+    saveJSON(__dataFolder, fp, data=data)
 
     

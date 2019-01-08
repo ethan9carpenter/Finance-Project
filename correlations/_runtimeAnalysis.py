@@ -1,5 +1,5 @@
 from datetime import datetime as dt
-from buildData.buildCorrelations import performAnalysis
+from correlations import performAnalysis
 import cProfile
 
 start = dt(2014, 1, 1)
