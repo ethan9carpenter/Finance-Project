@@ -1,7 +1,8 @@
 from datetime import datetime as dt
 from managers import moveDirUp
 from model import buildFeatureDF, splitXY
-from correlations import TickerList, formatFP
+from correlations import TickerList
+from correlations.results import formatFP
 import pandas as pd
 import numpy as np
 
@@ -27,9 +28,8 @@ def actualReturn(data, ticker=None, start=None, end=None):
 def getData(start, end, ticker, sigVal, data, against, minShift, maxShift):
     tl, tl2 = TickerList(data), TickerList(against)
     
-    fp = 'correlations/' + formatFP('{}', '{}', tl, tl2, minShift, maxShift, 'json')
-    fp = moveDirUp(fp)
-
+    fp = formatFP('{}', '{}', tl, tl2, minShift, maxShift, 'json')
+    print(fp)
     df = buildFeatureDF(fp, start, end, primary=ticker, sigVal=sigVal, dropSelf=False)
     
     df.dropna(inplace=True)

@@ -1,5 +1,5 @@
 from correlations.tickers import TickerList
-from correlations.buildCorrelations import getCorrelations, performAnalysis, formatFP
+#from correlations.buildCorrelations import getCorrelations, performAnalysis
 from correlations import results
 
 

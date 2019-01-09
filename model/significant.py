@@ -1,13 +1,13 @@
 import pandas as pd
 from stockData import loadStocks
-from correlations.results import sortedDF
-from model import formatData
+from correlations.results import asDF
 from datetime import datetime as dt
 from managers import saveJSON
 from os import path
+from correlations.results._cleanResults import readDF
 
 #To load data from the proper folder
-__fileFolder = path.dirname(path.abspath(__file__)) + '/data' 
+__fileFolder = path.dirname(path.abspath(__file__)) + '/' 
 
 def _trimToSig(data, sigCols, sigVal):
     for col in sigCols:
@@ -15,7 +15,7 @@ def _trimToSig(data, sigCols, sigVal):
     
     return data
     
-def _merge(data):
+def __merge(data):
     df = pd.DataFrame()
     for period, corrs in data.items():
         df[str(period)] = corrs['correlation']
@@ -53,60 +53,55 @@ def _buildSelectionDF(sigData, stock, start, end):
     return selectionDF
 
 def buildFeatureDF(yearlessFP, start, end, primary, sigVal, dropSelf=False):
-    data = {}
-
-    for year in range(start.year, end.year+1):
-        data[str(year)] = sortedDF(yearlessFP.format(dt(year, 1, 1).date(), dt(year, 12, 31).date()), 
-                                   dropSelf=dropSelf, allPositive=True)
-    df = _merge(data)
-    df = _trimToSig(df, sigCols=df.columns[:-1], sigVal=sigVal)
+    df = _correlationsByYear(yearlessFP, dropSelf, sigVal)
     df = _buildSelectionDF(_selectSignificant(df), primary, start=start, end=end)
 
     return df
 
-def splitXY(featureDF, xHow, xTyp, yHow, yTyp, labelColumn=-1):
-    X = featureDF.drop(featureDF.columns[labelColumn], axis=1)
-    y = featureDF[featureDF.columns[labelColumn]]
-
-    X = formatData(X, how=xHow, typ=xTyp)
-    y = formatData(y, how=yHow, typ=yTyp)
-    X, y = _handleNaN(X, y)
-    
-    return X, y
-    
-def _handleNaN(X, y):
-    X.dropna(inplace=True)
-    y.dropna(inplace=True)
-    
-    if len(y) > len(X):
-        y = y.loc[X.index[0]:X.index[-1]]
-    elif len(y) < len(X):
-        X = X.loc[y.index[0]:y.index[-1]]
-        
-    return X, y
-
-def writeSignificant(yearlessFP, start, end, sigVal=0, allPositive=False):
+def _correlationsByYear(yearlessFP, dropSelf=False, sigVal=-1, colToKeep=-1):
     data = {}
-
+    yearlessFP = 'dfResults/' + yearlessFP
     for year in range(start.year, end.year+1):
-        data[str(year)] = sortedDF(yearlessFP.format(dt(year, 1, 1).date(), dt(year, 12, 31).date()), 
-                                   allPositive=allPositive)
-    df = _merge(data)
+        data[str(year)] = readDF(yearlessFP.format(dt(year, 1, 1).date(), dt(year, 12, 31).date()))
+        print(year)
+    df = __merge(data)
     df = _trimToSig(df, sigCols=df.columns[:-1], sigVal=sigVal)
     
+    return df
+
+def saveSignificant(yearlessFP, start, end, sigVal=0, dropSelf=False):
+    df = _correlationsByYear(yearlessFP, dropSelf, sigVal)
+    
     df.reset_index(inplace=True)
-    primary = set(list(df['primary']))
+    primary = set(df['primary'])
 
     sigDict = {}
-    for company in primary:
+    for i, company in enumerate(primary):
         sig = df[df['primary'] == company]
-        sig = list(zip(df[['secondary', 'dayShift']]))
-        sigDict[company] = sig
-        
-    writeFP = 'significantPairs/significant_' + yearlessFP.format(start.year, end.year)
+        secondary = set(sig['secondary'])
+
+        sigDict[company] = {}
+        for other in secondary:
+            shifts = sig[sig['secondary'] == other]
+            shifts = shifts['dayShift']
+            sigDict[company][other] = sorted(shifts)
+            
+        print(i, '/', len(primary))
     
+    
+    writeFP = 'significantPairs/significant_{}_'.format(sigVal) + yearlessFP.format(start.year, end.year)
     saveJSON(__fileFolder, writeFP, data=sigDict)
     
     return sigDict
+
+if __name__ == '__main__':
+    fp = '{}_{}_505-sp500_505-sp500_1-1.json'
+    start = dt(2015, 1, 1)
+    end = dt(2018, 12, 31)
+    sigVal = 0.5
+    sig = saveSignificant(fp, start, end, sigVal, dropSelf=True)
+    from pprint import pprint
+    print(sig)
+    
     
     
